@@ -15,13 +15,23 @@ devtools::install_github("phe9480/nphRshiny")
 help(package="nphRshiny")
 
 Dependent R Packages:
+
 #Install the following packages if not yet
+
 #install.packages("cubature")
+
 #install.packages("mvtnorm") 
+
 #install.packages("remotes") 
+
 #remotes::install_github("keaven/nphsim")
+
 #install.packages("devtools")
+
 #install.packages("parallel")
+
 #install.packages("foreach")
+
 #install.packages("doParallel")
+
 #install.packages("gsDesign")
