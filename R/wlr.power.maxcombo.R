@@ -46,12 +46,13 @@
 #'  \item  n:      Total number of subjects for two arms
 #'  \item  DCO:    Expected analysis time
 #'  \item  targetEvents: Expected number of events
-#'  \item  power:  Power of the max-combo test at each analysis
+#'  \item  power:  Nominal power at each analysis
 #'  \item  overall.power Overall power of the study
 #'  \item  incr.power Incremental power for each analysis. 
 #'                  The sum of all incremental powers is the overall power.
 #'  \item  medians: Median of each treatment group
 #'  \item  bd:    Expected rejection boundary in z value
+#'  \item  p:     Expected rejection boundary in p value
 #'  \item  Expected_HR: Expected HR
 #'  }
 #'  Omega0: Covariance matrix under H0; 
@@ -379,12 +380,14 @@ wlr.power.maxcombo = function(n = 600, r = 1, DCO = c(24, 36),
                      Lambda = Lambda, G = G)
   }
   
+  p = 1-pnorm(bd)
+  
   o = list()
   o$Omega0 = Omega0
   o$Omega1 = Omega1
   o$mu = mu
   Analysis = 1:K
-  o$design = data.frame(cbind(n, Analysis, DCO, targetEvents, power, incr.power, overall.power, bd, medians, CV.HR.H0, CV.HR.H1))
+  o$design = data.frame(cbind(n, Analysis, DCO, targetEvents, power, incr.power, overall.power, bd, p, medians, CV.HR.H0, CV.HR.H1))
   o$Expected_HR = Expected_HR
   
   return(o)
