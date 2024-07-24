@@ -13,6 +13,17 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(nphRshiny)
+
+#Install the following packages if not yet
+#install.packages("cubature")
+#install.packages("mvtnorm") 
+#install.packages("remotes") 
+#remotes::install_github("keaven/nphsim")
+#install.packages("devtools")
+#install.packages("parallel")
+#install.packages("foreach")
+#install.packages("doParallel")
+
 ```
 
 ```{r}
@@ -54,15 +65,14 @@ wlr.power.maxcombo(DCO = c(24, 36),
 ```{r}
   
 #Schoenfeld method with power based on covariance matrix under H1
-#####ERROR: cov.method = "H1" error
 
-#wlr.power.maxcombo(DCO = c(24, 36),  
-#  alpha=c(0.01, 0.04)/2, 
-#  r = 1, n = 500, 
-#  h0 = h0, S0=S0,h1 = h.D3, S1= S.D3, 
-#  f.ws = list(IA1 = list(lr), FA=list(fh01)), 
-#  Lambda=Lambda, G0=G0, G1=G1,
-#  mu.method = "Schoenfeld", cov.method = "H1")
+wlr.power.maxcombo(DCO = c(24, 36),  
+  alpha=c(0.01, 0.04)/2, 
+  r = 1, n = 500, 
+  h0 = h0, S0=S0,h1 = h.D3, S1= S.D3, 
+  f.ws = list(IA1 = list(lr), FA=list(fh01)), 
+  Lambda=Lambda, G0=G0, G1=G1,
+  mu.method = "Schoenfeld", cov.method = "H1")
   
 ```
 
@@ -141,7 +151,8 @@ wlr.power.maxcombo(DCO = c(24, 36),
   h0 = h0, S0=S0,h1 = h.D3, S1= S.D3, 
   f.ws = list(IA1 = list(lr), FA=list(lr, fh11)), 
   Lambda=Lambda, G0=G0, G1=G1,
-  mu.method = "H1", cov.method = "H0")   
+  mu.method = "H1", cov.method = "H0")
 
 ```
+
 
