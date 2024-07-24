@@ -45,6 +45,8 @@
 #'              Default NULL. The date cut-off times will be determined by targetEvents.
 #'              If provided, then the targetEvents will be ignored.
 #'              
+#' @param seed seed for random sampling              
+#' 
 #' @return An object with a dataframe for each analysis including the following variables:
 #' \describe{
 #' \item{sim}{sequence number of simulated dataset;}
@@ -96,7 +98,7 @@
 #' plot(km.FA,xlab="Month Since Randomization",ylab="Survival",lty=1:2,xlim=c(0,36))
 #' 
 #' @export 
-simulation.pwexp = function(nSim=100, N = 600, A = 21, w=1.5, r=1, lambda0=log(2)/12, lambda1=log(2)/12*0.65, cuts=NULL, dropOff0=0, dropOff1=0, targetEvents = c(400, 500), DCO = NULL) {
+simulation.pwexp = function(nSim=100, N = 600, A = 21, w=1.5, r=1, lambda0=log(2)/12, lambda1=log(2)/12*0.65, cuts=NULL, dropOff0=0, dropOff1=0, targetEvents = c(400, 500), DCO = NULL, seed=2000) {
 
   f.nEachMonth = function (N=600, A=24, w=2, r=2) {
     
