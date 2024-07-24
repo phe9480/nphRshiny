@@ -16,7 +16,8 @@ simulation.pwexp(
   dropOff0 = 0,
   dropOff1 = 0,
   targetEvents = c(400, 500),
-  DCO = NULL
+  DCO = NULL,
+  seed = 2000
 )
 }
 \arguments{
@@ -58,6 +59,8 @@ to determine the FA cutoff.}
 \item{DCO}{A vector of data cut-off time in months, calculated from first subject in.
 Default NULL. The date cut-off times will be determined by targetEvents.
 If provided, then the targetEvents will be ignored.}
+
+\item{seed}{seed for random sampling}
 }
 \value{
 An object with a dataframe for each analysis including the following variables:
