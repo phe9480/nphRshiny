@@ -2,7 +2,7 @@
 % Please edit documentation in R/fe.R
 \name{fe}
 \alias{fe}
-\title{Expected Number of Events Since First Subject Randomized}
+\title{Expected Number of Events Over Time Since First Subject Randomized}
 \usage{
 fe(
   n = 450,
@@ -55,17 +55,19 @@ Lambda(t) = (t/A) where A is the enrollment period, i.e., Lambda(t) = t/A for 0<
 Lambda(t) = 1 when t > A. For more general non-uniform enrollment with weight psi,
 Lambda(t) = (t/A)^psi*I(0<=t<=A) + I(t>A). Default Lambda is uniform distribution function.}
 
-\item{G0}{Distribution function of lost-to-follow-up censoring process for control arm.}
+\item{G0}{Cumulative distribution function of drop-off for control arm, eg, G0=function(t){1-exp(-0.03/12*t)}
+is the distribution function for 3 percent drop-off in 12 months of followup.}
 
-\item{G1}{Distribution function of lost-to-follow-up censoring process for experimental arm.}
+\item{G1}{Cumulative distribution function of drop-off for experimental arm, eg, G1=function(t){1-exp(-0.03/12*t)}
+is the distribution function for 3 percent drop-off in 12 months of followup.}
 }
 \value{
 An object with a dataframe below.
 \describe{
 \itemize{
-\item ne0: number of events for control group
-\item ne1: number of events for experimental group
-\item ne: total number of events for two groups
+\item e0: number of events for control group
+\item e1: number of events for experimental group
+\item e: total number of events for two groups
 }
 }
 }

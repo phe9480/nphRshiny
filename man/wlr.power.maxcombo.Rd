@@ -76,10 +76,10 @@ If cuts is not specified or incorrectly specified, it might occasionally have nu
 
 \item{Lambda}{Cumulative distribution function of enrollment.}
 
-\item{G0}{Cumulative distribution function of drop-off for control arm, eg, G.ltfu=function(t){1-exp(-0.03/12*t)}
+\item{G0}{Cumulative distribution function of drop-off for control arm, eg, G0=function(t){1-exp(-0.03/12*t)}
 is the distribution function for 3 percent drop-off in 12 months of followup.}
 
-\item{G1}{Cumulative distribution function of drop-off for experimental arm, eg, G.ltfu=function(t){1-exp(-0.03/12*t)}
+\item{G1}{Cumulative distribution function of drop-off for experimental arm, eg, G1=function(t){1-exp(-0.03/12*t)}
 is the distribution function for 3 percent drop-off in 12 months of followup.}
 
 \item{mu.method}{Method for mean of weighted logrank test Z statistic.
