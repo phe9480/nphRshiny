@@ -1,8 +1,9 @@
-#'  Expected Average Weighted Hazard Ratio from Weighted Cox-Regression at a Calendar Time
+#'  Expected Average Weighted Hazard Ratio Over Time
 #' 
 #'  This function calculates the expected average weighted HR under H1
-#'  evaluated at a calendar time using (He et al 2021) method and Kalbfleisch and Prentice (1981) method.
-#'  Both methods are very close and the difference is usually negligible.
+#'  evaluated at a time since 1st subject randomized. Three methods are implemented: 
+#'  (1) Geometric Schoenfeld; (2) Kalbfleisch and Prentice (1981) method; (3) Geometric.
+#'  These methods are very close and the difference is usually negligible.
 #'  It's shown that the expected average weighted HR is approximately the weighted
 #'  average of piecewise HRs if the true HR(t) is piecewise under H1, where the weight
 #'  at each subinterval is the weighted probability of event at the subinterval 
@@ -56,18 +57,19 @@
 #' Lambda(t) = (t/A) where A is the enrollment period, i.e., Lambda(t) = t/A for 0<=t<=A, and 
 #' Lambda(t) = 1 when t > A. For more general non-uniform enrollment with weight psi, 
 #' Lambda(t) = (t/A)^psi*I(0<=t<=A) + I(t>A). Default Lambda is uniform distribution function.
-#' @param G Distribution function of lost-to-follow-up censoring process. The observed
-#' survival time is min(survival time, lost-to-follow-up time). Default G = 0 (no lost-to-followup)
+#' @param G Distribution function of lost-to-follow-up censoring process. Default G = 0 (no lost-to-followup). 
+#' For 3 percent of drop off every 12 months, assuming exponential distribution (ie constant hazard), then G(t) = 1 - exp(-0.03/12*t).
 #'
-#' @return An object with dataframes below.
+#' @return An object with dataframe below.
 #'  \itemize{
-#'  \item  AHR: Expected average hazard ratio
-#'  \item  AHR.KP Kalbfleisch and Prentice (1981) method
+#'  \item  AHR: Expected average HR (Geometric Schoenfeld)
+#'  \item  AHR2: Expected average HR (Geometric)
+#'  \item  AHR.KP Expected average HR (Kalbfleisch and Prentice)
 #'  \item  var.logHR: Asymptotic variance of the log expected average hazard ratio
 #'  \item  var.AHR: Asymptotic variance of the expected average hazard ratio using delta method
 #'  \item  var.AHR.KP: Asymptotic variance of the expected average hazard ratio of 
 #'  Kalbfleisch and Prentice (1981) method using delta method
-#'  \item  wt: Weight function used
+#'  \item  wt: Weight function
 #'  }
 #'  
 #' @examples 
@@ -105,8 +107,8 @@
 #' #Example (2) 
 #' #############
 #' #Same trial set up as example (1) but assuming delayed effect for 
-#' experimental arm. The delayed period is assumed 6 months, and after delay the
-#' hazard ratio is assumed 0.65.
+#' #experimental arm. The delayed period is assumed 6 months, and after delay the
+#' #hazard ratio is assumed 0.65.
 #' 
 #' HR = 0.65; delay = 6; lambda0 = log(2) / 12; 
 #' h0 = function(t){lambda0}; S0 = function(t){exp(-lambda0 * t)}
@@ -344,14 +346,14 @@ wlr.AHR = function(DCO = 24, r = 1, n = 450,
     w = f.w(t, f.S = S.bar, f.ws=f.ws, tau=tau, s.tau=s.tau, rho=rho, gamma=gamma)
     return(w * f.logHR(t)*Lambda(DCO-t) * (1 - G(t)) * f.bar(t))
   }
-  eta = integrate(I.eta, lower=0, upper=T, abs.tol=1e-8)$value
+  eta = integrate(I.eta, lower=0, upper=DCO, abs.tol=1e-8)$value
   
   #d: prob. of event
   I.d = function(t){
     w = f.w(t, f.S = S.bar, f.ws=f.ws, tau=tau, s.tau=s.tau, rho=rho, gamma=gamma)
     return(w * Lambda(DCO-t) * (1 - G(t)) * f.bar(t))
   }
-  d = integrate(I.d, lower=0, upper=T, abs.tol=1e-8)$value
+  d = integrate(I.d, lower=0, upper=DCO, abs.tol=1e-8)$value
   AHR = exp(eta / d)  
 
   #Kalbfleisch and Prentice (1981) Approach
@@ -365,33 +367,33 @@ wlr.AHR = function(DCO = 24, r = 1, n = 450,
     HRt = exp(f.logHR(t))
     return(w *1/(1 + HRt)*Lambda(DCO-t) * (1 - G(t)) * f.bar(t))
   }
-  AHR.KP = integrate(I.KP1, lower=0, upper=T, abs.tol=1e-8)$value/integrate(I.KP2, lower=0, upper=T, abs.tol=1e-8)$value
+  AHR.KP = integrate(I.KP1, lower=0, upper=DCO, abs.tol=1e-8)$value/integrate(I.KP2, lower=0, upper=DCO, abs.tol=1e-8)$value
   
   #Asymptotic variance of AHR
   I.I0 = function(t){
     w = f.w(t, f.S = S.bar, f.ws=f.ws, tau=tau, s.tau=s.tau, rho=rho, gamma=gamma)
     return(w^2 * Lambda(DCO-t) * (1 - G(t)) * f.bar(t))
   }
-  I0 = integrate(I.I0, lower=0, upper=T, abs.tol=1e-8)$value
+  I0 = integrate(I.I0, lower=0, upper=DCO, abs.tol=1e-8)$value
 
   I.d0 = function(t){
     w = f.w(t, f.S = S.bar, f.ws=f.ws, tau=tau, s.tau=s.tau, rho=rho, gamma=gamma)
     return(w * (exp(f.logHR(t))-1)*Lambda(DCO-t) * (1 - G(t)) * f0(t))
   }
-  d0 = integrate(I.d0, lower=0, upper=T, abs.tol=1e-8)$value
+  d0 = integrate(I.d0, lower=0, upper=DCO, abs.tol=1e-8)$value
   I.d1 = function(t){
     w = f.w(t, f.S = S.bar, f.ws=f.ws, tau=tau, s.tau=s.tau, rho=rho, gamma=gamma)
     return(w * (1-exp(-f.logHR(t)))*Lambda(DCO-t) * (1 - G(t)) * f1(t))
   }
-  d1 = integrate(I.d1, lower=0, upper=T, abs.tol=1e-8)$value
+  d1 = integrate(I.d1, lower=0, upper=DCO, abs.tol=1e-8)$value
   AHR2 = exp((r1*d1 + r0*d0)/d)
 
-  V = I0 / (n*Lambda(T)*r0*r1*d^2)
+  V = I0 / (n*Lambda(DCO)*r0*r1*d^2)
   
   o = list()
-  o$AHR = AHR
-  o$AHR.KP= AHR.KP
-  o$AHR2 = AHR2
+  o$AHR = AHR #Geometric Schoenfeld
+  o$AHR.KP= AHR.KP #Kalbfleisch and Prentice
+  o$AHR2 = AHR2 #Geometric
   o$var.logHR = V
   o$var.AHR = exp(2*AHR)*V
   o$var.AHR.KP = exp(2*AHR.KP)*V

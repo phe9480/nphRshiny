@@ -1,4 +1,4 @@
-#' Expected Number of Events Since First Subject Randomized
+#' Expected Number of Events Over Time Since First Subject Randomized
 #' 
 #' This function calculates the expected number of events under alternative hypothesis
 #' at calendar time t, which is calculated from first subject randomized. The function
@@ -7,6 +7,7 @@
 #' If the total sample size is not provided, then only the corresponding probability of event
 #' for each arm is provided.
 #' 
+#' @param n Total sample size for two arms.
 #' @param DCO Analysis time calculated from first subject randomization date.
 #' @param r  Randomization ratio of experimental arm : control arm as r:1. When r = 1, it is equal allocation. Default r = 1.
 #' @param h0 Hazard function of control arm. h0(t) = log(2)/m0 means T~exponential distribution with median m0.
@@ -21,16 +22,17 @@
 #' Lambda(t) = (t/A) where A is the enrollment period, i.e., Lambda(t) = t/A for 0<=t<=A, and 
 #' Lambda(t) = 1 when t > A. For more general non-uniform enrollment with weight psi, 
 #' Lambda(t) = (t/A)^psi*I(0<=t<=A) + I(t>A). Default Lambda is uniform distribution function.
-#' @param G0 Distribution function of lost-to-follow-up censoring process for control arm.
-#' @param G1 Distribution function of lost-to-follow-up censoring process for experimental arm.
-#' @param n Total sample size for two arms.  
+#' @param G0 Cumulative distribution function of drop-off for control arm, eg, G0=function(t){1-exp(-0.03/12*t)}
+#'               is the distribution function for 3 percent drop-off in 12 months of followup.
+#' @param G1 Cumulative distribution function of drop-off for experimental arm, eg, G1=function(t){1-exp(-0.03/12*t)}
+#'               is the distribution function for 3 percent drop-off in 12 months of followup.
 #'
 #' @return An object with a dataframe below.
 #'  \describe{
 #'       \itemize{
-#'       \item ne0: number of events for control group
-#'       \item ne1: number of events for experimental group
-#'       \item ne: total number of events for two groups
+#'       \item e0: number of events for control group
+#'       \item e1: number of events for experimental group
+#'       \item e: total number of events for two groups
 #'       }
 #'  }
 #'  
