@@ -1,0 +1,337 @@
+---
+title: "nphShiny Examples - Simulations"
+output: html_document
+date: "2024-07-21"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## wlr() function
+
+Function `wlr()` calculates the weighted logrank test. 
+
+It implements (1) Fleming-Harrington test (rho, gamma), (2) its truncated version with parameters (rho, gamma, tau, s.tau), where tau and s.tau are thresholds such that the weight is 
+s.tilda^rho*(1-s.tilda)^gamma, where s.tilda = max(s, s.tau). If s.tau is not provided but tau is provided, then calculate s.tau = S(tau). (3) any user-defined weight function of survival rate f.ws(s), for example f.ws = function(s){1/max(0.6, s^2)}. The weight function is based on the pooled survival curve within each strata by default. The priority to determine the weight is f.ws >> s.tau >> tau. When tau is infinity or s.tau is 0, it reduces to the Fleming-Harrinton test (rho, gamma).
+
+Type `?wlr` for more details.
+
+```{r}
+library(nphRshiny)
+
+t = rexp(100); e = sample(c(0,1), 100, replace = TRUE)
+g = c(rep(0, 50), rep(1, 50)); str1 = sample(c(1,2), 100, replace = TRUE)
+
+#FH(0, 1); s.tau = 0 means no threshold, so reduces to FH(0, 1)
+wlr(time=t, event=e, group=g, rho=0, gamma=1, tau = NULL, s.tau=0, strata1=str1)
+
+#FH(0, 1); when tau = Inf, so reduces to FH(0, 1)
+wlr(time=t, event=e, group=g, rho=0, gamma=1, tau = Inf, s.tau=NULL, strata1=str1)
+
+#FH(0, 1, tau=2)
+wlr(time=t, event=e, group=g, rho=0, gamma=1, tau = 2, s.tau=NULL, strata1=str1)
+
+#FH(0, 1, s.tau=0.5)
+wlr(time=t, event=e, group=g, rho=0, gamma=1, tau = NULL, s.tau=0.5, strata1=str1)
+
+#FH(0, 1, s.tau=0.5); tau is ignored if s.tau is available.
+wlr(time=t, event=e, group=g, rho=0, gamma=1, tau = 2, s.tau=0.5, strata1=str1)
+
+#logrank test; s.tau set as 0 but it is actually not used in calculation.
+wlr(time=t, event=e, group=g, rho=0, gamma=0, tau = NULL, s.tau=0, strata1=str1)
+
+#logrank test; s.tau value doesn't make any difference, because it is actually not used in calculation.
+wlr(time=t, event=e, group=g, rho=0, gamma=0, tau = NULL, s.tau=0.5, strata1=str1)
+
+
+rgs::wlr(time=t, event=e, group=g, rho=0, gamma=1, tau = NULL, s.tau=0, strata1=str1)
+
+rgs::wlr(time=t, event=e, group=g, rho=0, gamma=1, tau = 2, s.tau=NULL, strata1=str1)
+
+```
+## wlr.maxcombo() function
+Max-combo is a class of multiple combination tests. This function considers the maximum of multiple weighted log-rank tests, i.e. z_maxcombo = max(z1, z2, ..., zk), where zi is the weighted log-rank test statistic with weight function wi. This function calculates the p-value and associated statistics when performing the max-combo test. The weight function wi can be the flexible Stabilized Fleming-Harrington class sFH(rho, gamma, tau, s.tau), or any user-defined weight function. Refer to `wlr()` function for instructions how to set weight parameters. Refer to Karrinson (2016) for the method of max-combo when it is defined based on FH(0, 0), FH(1, 0), FH(0, 1) and FH(1, 1). However, this function extends the concept to include any type of weighted log-rank tests. The kth weighted log-rank test has parameters of (rho_k, gamma_k, tau_k, s.tau_k) defined in the stabilized Fleming-Harrington class or user-defined weight function f.ws_k based on pooled survival curve, for k = 1, ..., K. For the stabilized Fleming-Harrington class, specify either tau or s.tau, which are thresholds in survival time and survival rate, respectively. In addition, the weight function is estimated within each strata.
+
+The function is consistent in both `rgs` package and `nphDesign` package. Type `?wlr.maxcombo` for more details.
+
+```{r}
+#Example (1) Stratified max-combo test including 3 weighted log-rank test statistics:
+#log-rank, FH(0, 0.5), and sFH(0, 1, tau=0.5).
+time=rexp(100); event=sample(c(0,1), 100, replace = TRUE); 
+group=c(rep(0, 50), rep(1, 50)); 
+strata1=sample(c(1,2), 100, replace = TRUE)
+strata2=sample(c(1,2), 100, replace = TRUE) 
+strata3=sample(c(3,4), 100, replace = TRUE)
+rho = c(0,0,0); gamma=c(0,0.5,1); tau = NULL; s.tau=c(0, 0, 0.5);
+f.ws=list(
+         lr = function(s){return(1)}, 
+         fh005=function(s){sqrt(1-s)},
+         sfh01=function(s){1-apply(cbind(s, 0.5),MARGIN=1,FUN=max)}
+         )
+side = c("one.sided")
+
+wlr.maxcombo(time=time, event=event, group=group, strata1=strata1, 
+strata2=strata2, strata3=strata3, rho=rho, gamma=gamma, 
+tau = tau, s.tau=s.tau, f.ws=f.ws, side = side)
+
+#Equivalent to 
+wlr.maxcombo(time=time, event=event, group=group, strata1=strata1, strata2=strata2, strata3=strata3, rho=rho, gamma=gamma, tau = tau, s.tau=s.tau, f.ws=NULL, side = side)
+
+#Example (2) If there is only 1 weighted log-rank test, max-combo reduces to weighted log-rank test
+#FH(0, 1) test
+wlr.maxcombo(time=time, event=event, group=group, strata1=strata1, 
+strata2=strata2, strata3=strata3, rho=0, gamma=1, 
+tau = NULL, s.tau=0, f.ws=NULL, side = side)
+
+#equivalent to
+wlr(time=time, event=event, group=group, strata1=strata1, 
+strata2=strata2, strata3=strata3, rho=0, gamma=1, 
+tau = NULL, s.tau=0, f.ws=NULL, side = side)
+
+#Example (3) maxcombo of (logrank, FH01, FH11)
+wlr.maxcombo(time=time, event=event, group=group, strata1=strata1, 
+strata2=strata2, strata3=strata3, rho=c(0,0,1), gamma=c(0,1,1), 
+tau = NULL, s.tau=c(0,0,0), f.ws=NULL, side = side)
+
+#Example (4) maxcombo of (logrank, FH01)
+wlr.maxcombo(time=time, event=event, group=group, strata1=strata1, 
+strata2=strata2, strata3=strata3, rho=c(0,0), gamma=c(0,1), 
+tau = NULL, s.tau=c(0,0), f.ws=NULL, side = side)
+
+#Example (5) maxcombo of (logrank, modestly logrank)
+wlr.maxcombo(time=time, event=event, group=group, strata1=strata1, 
+strata2=strata2, strata3=strata3, rho=NULL, gamma=NULL, 
+tau = NULL, s.tau=NULL, f.ws=list(
+lr = function(s){1},
+mlr = function(s){1/apply(cbind(s, 0.5),MARGIN=1,FUN=max)}), side = side)
+
+rgs::wlr.maxcombo(time=time, event=event, group=group, strata1=strata1, 
+strata2=strata2, strata3=strata3, rho=NULL, gamma=NULL, 
+tau = NULL, s.tau=NULL, f.ws=list(
+lr = function(s){1},
+mlr = function(s){1/apply(cbind(s, 0.5),MARGIN=1,FUN=max)}), side = side)
+
+```
+
+## wlr.inference() function for handling statistical inference with multiple analyses
+
+This function determines the statistical inference using weighted log-rank tests in group sequential design including rejection boundary and p value at current analysis.
+In standard log-rank test, the rejection boundaries can be determined based 
+on the number of events and the alpha spending function, because the asymptotic
+distribution can be approximated by the number of events. However, when using weighted 
+log-rank test, the asymptotic distribution is usually associated with the 
+pooled survival curve estimated from the actual data, e.g., Fleming-Harrington class.
+As a result, the actual rejection boundary depends on the asymptotic correlation 
+estimated from the actual data. Refer to Tsiatis (1982) for the consistent 
+estimator of the asymptotic correlation matrix.
+
+```{r}
+N=600; m0 = 12; A=21; r=1; hr = 0.65; w = 1.5; dropOff0 = dropOff1 = 0; 
+targetEvents = c(300, 397, 496); cuts = 6
+lambda0 = log(2) / m0; lambda1 = c(log(2)/m0, log(2)/m0*hr)
+
+data0 = simulation.pwexp(nSim=1, N = N, A = A, w=w, r=r, lambda0=lambda0, 
+      lambda1=lambda1, cuts=cuts, dropOff0= dropOff0, dropOff1= dropOff1, 
+      targetEvents = targetEvents)
+      
+
+data1 = data0[[1]][sim==1,]; data2 = data0[[2]][sim==1,]; data3 = data0[[3]][sim==1,]
+#Add strata variables       
+data1$strata1 = data1$strata2 =data1$strata3 =sample(c(1,2), N, replace = TRUE);
+data2$strata1 = data2$strata2 =data2$strata3 =sample(c(1,2), N, replace = TRUE);
+data3$strata1 = data3$strata2 =data3$strata3 =sample(c(1,2), N, replace = TRUE);
+data1$group = as.numeric(data1$treatment == "experimental")
+data2$group = as.numeric(data2$treatment == "experimental")
+data3$group = as.numeric(data3$treatment == "experimental")
+
+#Define weight functions for weighted log-rank tests
+lr = function(s){1}
+fh01 = function(s){(1-s)}
+fh11 = function(s){s*(1-s)}
+#stabilized FH(0, 1; 0.5)
+sfh01 = function(s){s1 = apply(cbind(s, 0.5), MARGIN=1,FUN=max); return(1-s1)} 
+#modestly log-rank
+mfh01 = function(s){s1 = apply(cbind(s, 0.5), MARGIN=1,FUN=max); return(1/s1)}
+
+#Example (1). 2 IAs and FA. IA1 uses log-rank test; IA2 uses max(log-rank and FH01);
+#               FA uses max(log-rank, FH01, FH11).
+#(a) At IA1
+rgs::wlr.inference(data=list(IA1=data1), alpha = c(0.005), 
+              strata1 = data1$strata1, strata2 = data1$strata2, strata3 = NULL,
+              f.ws=list(IA1=list(lr)))
+#equivalent to
+wlr.maxcombo(time=data1$survTimeCut, event=(1-data1$cnsrCut), group=data1$group, strata1=data1$strata1, strata2=data1$strata2, strata3=NULL, rho=0, gamma=0, 
+tau = NULL, s.tau=0, f.ws=NULL, side = "one.sided")
+
+#also equivalent to
+wlr(time=data1$survTimeCut, event=(1-data1$cnsrCut), group=data1$group, strata1=data1$strata1, strata2=data1$strata2, strata3=NULL, rho=0, gamma=0, 
+tau = NULL, s.tau=0, f.ws=NULL, side = "one.sided")
+
+#(b) At IA2
+wlr.inference(data=list(IA1=data1, IA2=data2), 
+    alpha = c(0.01, 0.02)/2,
+    strata1 = data1$strata1, strata2 = data1$strata2, strata3 = NULL,
+    f.ws=list(IA1=list(lr), IA2=list(lr, fh01)))
+
+#(c) At FA
+wlr.inference(data=list(IA1=data1, IA2=data2, FA=data3), 
+    alpha = c(0.01, 0.02, 0.02)/2, 
+    strata1 = data1$strata1, strata2 = data1$strata2, strata3 = NULL,
+    f.ws=list(IA1=list(lr), IA2=list(lr, fh01), FA=list(lr, fh01, fh11)))
+
+```
+
+
+## wlr.cov() function
+
+This function calculates the covariance matrix of two weighted log-rank tests at the same analysis time. The two weight functions are specified by stabilized Fleming-Harrington class with parameters (rho, gamma, tau, s.tau), where tau and s.tau are thresholds for survival time and survival rates, respectively. Either tau or s.tau can be specified. tau = Inf or s.tau = 0 reduces to the Fleming-Harrington test (rho, gamma). User-defined weight functions f.ws1 and f.ws2 can be used as well. For example, f.ws1 = function(s)s^rho*(1-s)^gamma is equivalent to Fleming-Harrington (rho, gamma) test with parameters specified for rho and gamma.
+
+```{r}
+#Example 1. Covariance between logrank test and FH(0, 1) test
+t = rexp(100); e = sample(c(0,1), 100, replace = TRUE)
+g = c(rep(0, 50), rep(1, 50))
+str1 = sample(c(1,2), 100, replace = TRUE)
+str2 = sample(c(1,2), 100, replace = TRUE)
+str3 = sample(c(1,2), 100, replace = TRUE)
+
+wlr.cov(time=t, event=e, group=g, rho1=0, gamma1=0, tau1 = NULL, s.tau1=0,rho2=0, gamma2=1, tau2 = NULL, s.tau2=0,f.ws1=NULL, f.ws2=NULL)
+
+#Example 2. Covariance between stratified logrank test and stratified FH(0, 1) test
+wlr.cov(time=t, event=e, group=g, rho1=0, gamma1=0, tau1 = NULL, s.tau1=0, rho2=0, gamma2=1, tau2 = NULL, s.tau2=0,f.ws1=NULL, f.ws2=NULL,strata1=str1,strata2=str2,strata3=str3)
+
+#Equivalent to:
+wlr.cov(time=t, event=e, group=g, rho1=NULL, gamma1=NULL, tau1 = NULL, s.tau1=0, rho2=NULL, gamma2=NULL, tau2 = NULL, s.tau2=0,f.ws1=function(s){1}, f.ws2=function(s){(1-s)}, strata1=str1,strata2=str2,strata3=str3)
+
+
+```
+
+## simulation.pwexp() Function
+
+Simulate Randomized two-arm trial data with the following characteristics: (1) randomization time (entry time) is generated according to the specified non-uniform accrual pattern, i.e. the cumulative recruitment at calendar time t is (t/A)^w with weight w and enrollment complete in A months. w = 1 means uniform enrollment, which is usually not realistic due to graduate sites activation process. (2) Survival time follows piece-wise exponential distribution for each arm. (3) N total patients with r:1 randomization ratio (4) Random drop off can be incorporated into the censoring process. (5) Data cutoff dates are determined by specified vector of target events for all analyses. (6) A dataset is generated for each analysis according to the specified number of target events. Multiple analyses can be specified according to the vector of targetEvents, eg, targetEvents = c(100, 200, 300) defines 3 analyses at 100, 200, and 300 events separately.
+
+```{r}
+#Example (1): Simulate 10 samples from proportional hazards scenario. 
+#Total 600 pts, 1:1 randomization, control median OS 12 mo; 
+#HR = 0.65, enrollment 24 months, weight 1.5, no drop offs; 
+#IA and FA are performed at 400 and 500 events respectively.
+
+sim.ph = simulation.pwexp(nSim=10, N = 600, A = 24, w=1.5, r=1, lambda0=log(2)/12, lambda1= log(2)/12*0.65, cuts=NULL, targetEvents = c(400, 500))
+km.IA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data=sim.ph[[1]][sim==1,])
+plot(km.IA,xlab="Month Since Randomization", ylab="Survival", lty=1:2, xlim=c(0,36))
+km.FA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data=sim.ph[[2]][sim==1,])
+plot(km.FA,xlab="Month Since Randomization", ylab="Survival", lty=1:2, xlim=c(0,36))
+
+#Example (2): Simulate 10 samples with delayed effect at month 6;
+#Total 600 pts, 1:1 randomization, control median OS 12 mo; 
+#HR = 0.65, enrollment 24 months, weight 1.5, no drop offs; 
+#IA and FA are performed at 400 and 500 events respectively.
+
+sim.delay6 = simulation.pwexp(nSim=10, N = 600, A = 24, w=1.5, r=1, lambda0=rep(log(2)/12, 2), lambda1= c(log(2)/12, log(2)/12*0.65), cuts=6,
+                              targetEvents = c(400, 500))
+km.IA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data=sim.delay6[[1]][sim==1,])
+plot(km.IA,xlab="Month Since Randomization", ylab="Survival", lty=1:2, xlim=c(0,36))
+km.FA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data= sim.delay6[[2]][sim==1,])
+plot(km.FA,xlab="Month Since Randomization", ylab="Survival", lty=1:2, xlim=c(0,36))
+
+#Example (3): Simulate 10 samples with delayed effect at month 6 
+#Control arm has crossover to subsequent IO after 24 mo, so its hazard decreases 20%.
+#control arm has constant hazard (median 11.7 mo) and experimental arm has 
+#hr = 1 and 0.65 at intervals (0, 6) and (6, 24) respectively.
+#HR = 0.65, enrollment 24 months, weight 1.5, no drop offs; 
+#IA and FA are performed at 400 and 500 events respectively.
+
+crossEffect = 0.8 #Hazard ratio in control arm (after crossover vs before crossover)
+lam0 = log(2)/12*c(1, 1, crossEffect); lam1 = log(2)/12*c(1, hr, hr)
+sim.delay6crs=simulation.pwexp(nSim=10,N=600,A=24,w=1.5,r=1,lambda0=lambda0, lambda1=lambda1,cuts=c(6, 24), targetEvents=c(400, 500))
+km.IA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data=sim.delay6crs[[1]][sim==1,])
+plot(km.IA,xlab="Month Since Randomization", ylab="Survival", lty=1:2, xlim=c(0,36))
+km.FA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data= sim.delay6crs[[2]][sim==1,])
+plot(km.FA,xlab="Month Since Randomization", ylab="Survival", lty=1:2, xlim=c(0,36))
+
+```
+
+## simulation.nphDesign.pwexp() function
+
+Simulate Randomized two-arm trial data with the following characteristics: (1) randomization time (entry time) is generated according to the specified non-uniform accrual pattern, i.e. the cumulative recruitment at calendar time t is (t/A)^w with weight w and enrollment complete in A months. w = 1 means uniform enrollment, which is usually not realistic due to graduate sites activation process. (2) Survival time follows piece-wise exponential distribution for each arm. (3) N total patients with r:1 randomization ratio (4) Random drop off can be incorporated into the censoring process. (5) Data cutoff dates are determined by specified vector of target events for all analyses. (6) A dataset is generated for each analysis according to the specified number of target events. Multiple analyses can be specified according to the vector of targetEvents, eg, targetEvents = c(100, 200, 300) defines 3 analyses at 100, 200, and 300 events separately. (7) Weighted log-rank test is then performed for each simulated group sequential dataset.
+
+```{r}
+#Example 1. Simulating trials: (1) Subjects: 300/arm, enrolled in 21 months with accural weight 1.5. No dropoff. (2) Distributions: control arm - exponential with median 10 months, experimental arm - exponential with median 10/0.7, i.e., HR = 0.7. (3) alpha: OBF spending function using LanDeMets approach for 1-sided overall alpha 0.025 with analyses planned at 210 and 300 events. (4) Tests: (a) logrank test for both IA and FA; (b) logrank for IA and FH(0,1) for FA; (c) FH(0, 1) for both IA and FA; (d) logrank for IA and max(logrank, FH(0,1)) for FA; other options described in coding below in (e)-(g).
+
+#Weighted logrank tests 
+fws1 = list(IA1 = list(lr), FA = list(lr))
+fws2 = list(IA1 = list(lr), FA = list(fh01))
+fws3 = list(IA1 = list(fh01), FA = list(fh01))
+fws4 = list(IA1 = list(lr), FA = list(lr, fh01))
+fws5 = list(IA1 = list(lr), FA = list(lr, fh01, fh11))
+fws6 = list(IA1 = list(lr, fh01), FA = list(lr, fh01))
+fws7 = list(IA1 = list(sfh01), FA = list(lr, fh01))
+
+fws.options = list(fws1, fws2, fws3, fws4, fws5, fws6, fws7)
+
+#(a)only check logrank test, i.e. fws1
+ex1a = simulation.nphDesign.pwexp(nSim=5, N = 600, A = 21, w=1.5, r=1, dropOff0=0, dropOff1=0, lambda0=log(2)/10, lambda1=log(2)/10*0.7, cuts=NULL, 
+targetEvents = c(300, 450), sf = "LDOF", overall.alpha = 0.025, alpha = NULL,
+logrank="Y", fws.options=list(fws1), H0 = "N", 
+nphDesign = NULL, parallel = FALSE, n.cores=8, seed = 2000)
+
+#(b)parallel computing
+ex1b = simulation.nphDesign.pwexp(nSim=5, N = 600, A = 21, w=1.5, r=1, dropOff0=0, dropOff1=0, lambda0=log(2)/10, lambda1=log(2)/10*0.7, cuts=NULL, 
+targetEvents = c(300, 450), sf = "LDOF", overall.alpha = 0.025, alpha = NULL,
+logrank="Y", fws.options=list(fws1), H0 = "N", 
+nphDesign = NULL, parallel = TRUE, n.cores=8, seed = 2000)
+
+#(c)only check logrank test, i.e. fws1, under Null hypothesis H0 (ignoring lambda1)
+ex1c = simulation.nphDesign.pwexp(nSim=5, N = 600, A = 21, w=1.5, r=1, dropOff0=0, dropOff1=0, lambda0=log(2)/10, lambda1=log(2)/10*0.7, cuts=NULL, 
+targetEvents = c(300, 450), sf = "LDOF", overall.alpha = 0.025, alpha = NULL,
+logrank="Y", fws.options=list(fws1), H0 = "Y", 
+nphDesign = NULL, parallel = FALSE, n.cores=5, seed = 2000)
+
+#(d)explore two options: fws1 and fws2
+
+#######################
+#Need to fix the parallel computing
+#######################
+ex1d = simulation.nphDesign.pwexp(nSim=5, N = 600, A = 21, w=1.5, r=1, dropOff0=0, dropOff1=0, lambda0=log(2)/10, lambda1=log(2)/10*0.7, cuts=NULL, 
+targetEvents = c(300, 450), sf = "LDOF", overall.alpha = 0.025, alpha = NULL,
+logrank="Y", fws.options=list(fws1, fws2), H0 = "N", 
+nphDesign = NULL, parallel = FALSE, n.cores=8, seed = 2000)
+
+#(e)explore 4 options: fws1 - fws4
+
+#######################
+#Need to fix the parallel computing
+#######################
+ex1e = simulation.nphDesign.pwexp(nSim=5, N = 600, A = 21, w=1.5, r=1, dropOff0=0, dropOff1=0, lambda0=log(2)/10, lambda1=log(2)/10*0.7, cuts=NULL, 
+targetEvents = c(300, 450), sf = "LDOF", overall.alpha = 0.025, alpha = NULL,
+logrank="Y", fws.options=list(fws1, fws2, fws3, fws4), H0 = "N", 
+nphDesign = NULL, parallel = FALSE, n.cores=8, seed = 2000)
+
+#(f)simulation by using the nphDesign object generated
+ex1f=simulation.nphDesign.pwexp(nSim=10, nphDesign = study1)
+
+alpha = f.alpha(overall.alpha=0.025, side = 1, sf="LDOF", timing=c(0.7, 1))
+m0 = 10
+lambda0 = log(2) / m0
+h0 = function(t){lambda0}; 
+S0 = function(t){exp(-lambda0 * t)}
+h1 = function(t){lambda0*0.7}; 
+S1 = function(t){exp(-lambda0 *0.7* t)}
+
+Lambda = function(t){(t/21)^1.5*as.numeric(t <= 21) + as.numeric(t > 21)}
+G.ltfu = function(t){0}
+G0 = function(t){0}; G1 = function(t){0}; 
+
+f.logHR = function(t){log(0.7)}
+
+study1a = wlr.power.maxcombo(DCO = c(24, 36),  
+  alpha=c(0.01, 0.04)/2, 
+  r = 1, n = 500, 
+  h0 = h0, S0=S0, h1 = h1, S1= S1, 
+  f.ws = list(IA1 = list(lr), FA=list(fh01)), 
+  Lambda=Lambda, G0=G0, G1=G1,
+  mu.method = "Schoenfeld", cov.method = "H0")
+
+  
+
+```
