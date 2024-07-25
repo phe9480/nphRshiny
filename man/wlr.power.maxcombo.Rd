@@ -111,6 +111,7 @@ An object with dataframes below.
 \item  n:      Total number of subjects for two arms
 \item  DCO:    Expected analysis time
 \item  targetEvents: Expected number of events
+\item  maturity Expected proportion of subjects with events
 \item  power:  Nominal power at each analysis
 \item  overall.power Overall power of the study
 \item  incr.power Incremental power for each analysis.
