@@ -295,7 +295,7 @@ nphDesign = NULL, parallel = FALSE, n.cores=5, seed = 2000)
 ex1d = simulation.nphDesign.pwexp(nSim=5, N = 600, A = 21, w=1.5, r=1, dropOff0=0, dropOff1=0, lambda0=log(2)/10, lambda1=log(2)/10*0.7, cuts=NULL, 
 targetEvents = c(300, 450), sf = "LDOF", overall.alpha = 0.025, alpha = NULL,
 logrank="Y", fws.options=list(fws1, fws2), H0 = "N", 
-nphDesign = NULL, parallel = FALSE, n.cores=8, seed = 2000)
+parallel = TRUE, n.cores=8, seed = 2000)
 
 #(e)explore 4 options: fws1 - fws4
 
