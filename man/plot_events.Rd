@@ -67,7 +67,14 @@ Lambda(t) = (t/A)^psi*I(0<=t<=A) + I(t>A). Default Lambda is uniform distributio
 \item{...}{Other graphic parameters passed to the plot}
 }
 \value{
-Display of the graph
+Display of the graph and return a dataframe below.
+\describe{
+\itemize{
+\item e0: number of events for control group
+\item e1: number of events for experimental group
+\item e: total number of events for two groups
+}
+}
 }
 \description{
 This function plots the cumulative number of events for each arm and total per study design
