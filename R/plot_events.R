@@ -81,5 +81,7 @@ plot_events = function(n = 450, Tmax = 50, r=1,
   
   legend(0, max(nE[, 3]), leg$txt, col=1:3, lty=1:3, bty="n", cex=0.8)
   
+  e0 = nE[, 1];   e1 = nE[, 2];   e = nE[, 3]
+  return(data.frame(cbind(t, e0, e1, e)))
 }
 
