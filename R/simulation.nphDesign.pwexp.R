@@ -145,7 +145,7 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 672, A = 21, w=1.5, r=1, l
     logrank="N", fws.options=NULL, H0 = "N", parallel=TRUE, n.cores=8, seed=2022) {
 
     set.seed(seed)
-  
+    side = 1 #always one-sided
   #Simulation for checking type I error
   if (H0 == "Y"){lambda1 = lambda0} 
   
@@ -162,8 +162,7 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 672, A = 21, w=1.5, r=1, l
   #if alpha is provided, then sf is ignored.
   if(is.null(alpha) && !is.null(overall.alpha)){
     ld.obf = function(s){
-      if (side == 1){a = 2*(1 - pnorm(qnorm(1-overall.alpha/2)/sqrt(s)))}
-      if (side == 2){a = 2*2*(1 - pnorm(qnorm(1-overall.alpha/4)/sqrt(s)))}
+      a = 2*(1 - pnorm(qnorm(1-overall.alpha/2)/sqrt(s)))
       return(a)
     }
     ld.pk = function(s){overall.alpha * log(1 + (exp(1)-1)*s)}
