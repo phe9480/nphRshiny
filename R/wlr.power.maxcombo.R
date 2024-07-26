@@ -387,7 +387,8 @@ wlr.power.maxcombo = function(n = 600, r = 1, DCO = c(24, 36),
   o$Omega0 = Omega0
   o$Omega1 = Omega1
   o$mu = mu
-  o$maturity = targetEvents / n
+  
+  maturity = targetEvents / n
   Analysis = 1:K
   o$design = data.frame(cbind(n, Analysis, DCO, targetEvents, maturity, power, incr.power, overall.power, bd, p, medians, CV.HR.H0, CV.HR.H1))
   o$Expected_HR = Expected_HR
