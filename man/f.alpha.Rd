@@ -20,15 +20,15 @@ The incremental alpha is the type I error allocated to a specific analysis while
 Specifically, incremental alpha_k = P(reject H0 at kth analysis while not rejecting H0 at all previous analyses)
 }
 \examples{
-(1) Group sequential tests at information times 0.5, 0.7, 1.0 with overall alpha 0.025.
+#Group sequential tests at information times 0.5, 0.7, 1.0 with overall alpha 0.025.
 
-#LD OBF spending
+#(1) LD OBF spending
 f.alpha(overall.alpha=0.025, sf="LDOF", timing=c(0.5, 0.7, 1.0))
 
-#LD Pocock spending
+#(2) LD Pocock spending
 f.alpha(overall.alpha=0.025, sf="LDPK", timing=c(0.5, 0.7, 1.0))
 
-#HSD(-3)
+#(3) Hwang-Shih-DeCani(-3)
 f.alpha(overall.alpha=0.025, sf="HSD", timing=c(0.5, 0.7, 1.0), param=-3)
 
 
