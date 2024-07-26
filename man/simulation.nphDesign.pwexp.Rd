@@ -17,6 +17,7 @@ simulation.nphDesign.pwexp(
   dropOff1 = 0,
   targetEvents = c(290, 397, 496),
   sf = "LDOF",
+  param = -3,
   overall.alpha = 0.025,
   alpha = NULL,
   logrank = "N",
@@ -62,6 +63,17 @@ cuts = c(6, 24), which forms 3 intervals (0, 6), (6, 24), (24, infinity)}
 \item{targetEvents}{A vector of target events is used to determine DCOs. For example,
 397 target events are used to determine IA DCO; and 496 events are used
 to determine the FA cutoff.}
+
+\item{sf}{Spending function. LanDeMets O'Brien Fleming: "LDOF", LanDeMets Pocock: "LDPK", "HSD": Hwang-Shih-DeCani spending function with parameter param.}
+
+\item{param}{parameter for Hwang-Shih-DeCani spending function}
+
+\item{overall.alpha}{Allocated overall alpha (one-sided) for group sequential design}
+
+\item{alpha}{Allocated one-sided alpha levels. sum(alpha) is the total type I error.
+If alpha spending function a(t) is used for information time c(t1, ..., tK),
+then alpha1 = a(t1), alpha2 = a(t2)-a(t1), ..., alphaK = a(tK)-a(t_{K-1}),
+and the total alpha for all analyses is a(tK). When alpha is provided, sf is ignored.}
 
 \item{logrank}{Indicator whether log-rank test is requested besides the weighted logrank tests. "Y" or "N". Default "Y".
 If "Y", the traditional log-rank test will be used based on survdiff() function.
