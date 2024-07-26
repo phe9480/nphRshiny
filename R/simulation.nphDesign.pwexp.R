@@ -43,6 +43,13 @@
 #' @param targetEvents A vector of target events is used to determine DCOs. For example, 
 #'              397 target events are used to determine IA DCO; and 496 events are used 
 #'              to determine the FA cutoff.
+#' @param  sf Spending function. LanDeMets O'Brien Fleming: "LDOF", LanDeMets Pocock: "LDPK", "HSD": Hwang-Shih-DeCani spending function with parameter param.
+#' @param param parameter for Hwang-Shih-DeCani spending function
+#' @param  overall.alpha  Allocated overall alpha (one-sided) for group sequential design
+#' @param alpha Allocated one-sided alpha levels. sum(alpha) is the total type I error.
+#'           If alpha spending function a(t) is used for information time c(t1, ..., tK),
+#'           then alpha1 = a(t1), alpha2 = a(t2)-a(t1), ..., alphaK = a(tK)-a(t_{K-1}),
+#'           and the total alpha for all analyses is a(tK). When alpha is provided, sf is ignored.
 #' @param logrank Indicator whether log-rank test is requested besides the weighted logrank tests. "Y" or "N". Default "Y".
 #'                 If "Y", the traditional log-rank test will be used based on survdiff() function.
 #'                 If "N", the weighted log-rank test with weighting function specified in fws will be used.
@@ -141,7 +148,7 @@
 #' @export 
 simulation.nphDesign.pwexp = function(nSim=10000, N = 672, A = 21, w=1.5, r=1, lambda0=log(2)/11.7, lambda1=log(2)/11.7*0.745, 
     cuts=NULL, dropOff0=0, dropOff1=0, targetEvents = c(290, 397, 496), 
-    sf = "LDOF", overall.alpha = 0.025, alpha = NULL,
+    sf = "LDOF", param = -3, overall.alpha = 0.025, alpha = NULL,
     logrank="N", fws.options=NULL, H0 = "N", parallel=TRUE, n.cores=8, seed=2022) {
 
     set.seed(seed)
@@ -161,23 +168,7 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 672, A = 21, w=1.5, r=1, l
   #if alpha is not provided, use sf to derive alpha. 
   #if alpha is provided, then sf is ignored.
   if(is.null(alpha) && !is.null(overall.alpha)){
-    ld.obf = function(s){
-      a = 2*(1 - pnorm(qnorm(1-overall.alpha/2)/sqrt(s)))
-      return(a)
-    }
-    ld.pk = function(s){overall.alpha * log(1 + (exp(1)-1)*s)}
-    
-    
-    if (sf == "LDOF"){
-      gs.alpha = ld.obf(s = timing)
-    }
-    if (sf == "LDPK") {
-      gs.alpha = ld.pk(s = timing)
-    }
-    if (K == 1){alpha = overall.alpha} else{
-      alpha[1] = gs.alpha[1]
-      for(i in 2:K){alpha[i] = gs.alpha[i] - gs.alpha[i-1]}
-    }
+    alpha = f.alpha(overall.alpha=overall.alpha, sf=sf, timing=timing, param=param)
   }
   
   wlr.sim = array(NA, dim=c(nSim, M, K, 5))
