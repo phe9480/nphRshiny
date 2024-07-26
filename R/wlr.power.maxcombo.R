@@ -390,7 +390,13 @@ wlr.power.maxcombo = function(n = 600, r = 1, DCO = c(24, 36),
   
   maturity = targetEvents / n
   Analysis = 1:K
-  o$design = data.frame(cbind(n, Analysis, DCO, targetEvents, maturity, power, incr.power, overall.power, bd, p, medians, CV.HR.H0, CV.HR.H1))
+  cum.power = rep(NA, K)
+  
+  for (i in 1:K){
+    cum.power [i] = sum(incr.power[1:i])
+  }
+  
+  o$design = data.frame(cbind(n, Analysis, DCO, targetEvents, maturity, power, incr.power, cum.power, overall.power, bd, p, medians, CV.HR.H0, CV.HR.H1))
   o$Expected_HR = Expected_HR
   
   return(o)
