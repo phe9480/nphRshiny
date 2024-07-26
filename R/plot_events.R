@@ -22,7 +22,14 @@
 #' @param G1 Distribution function of lost-to-follow-up censoring process for experimental arm.
 #' @param ... Other graphic parameters passed to the plot
 #'
-#' @return Display of the graph
+#' @return Display of the graph and return a dataframe below.
+#'  \describe{
+#'       \itemize{
+#'       \item e0: number of events for control group
+#'       \item e1: number of events for experimental group
+#'       \item e: total number of events for two groups
+#'       }
+#'  }
 #'  
 #' @examples 
 #' 
