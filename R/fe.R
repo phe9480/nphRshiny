@@ -88,7 +88,6 @@
 #' legend(0, max(nE), c("Control", "Experimental", "Total"), col=1:3, lty=1:3, bty="n", cex=0.8)
 #' 
 #' @export
-
 fe = function(n = 450, DCO = 24, r = 1, 
               h0 = function(t){log(2)/12}, 
               S0=function(t){exp(-log(2)/12 * t)}, 

@@ -86,8 +86,7 @@
 #' #Equivalent to:
 #' wlr.cov(time=t, event=e, group=g, rho1=NULL, gamma1=NULL, tau1 = NULL, s.tau1=0, rho2=NULL, gamma2=NULL, tau2 = NULL, s.tau2=0,f.ws1=function(s){1}, f.ws2=function(s){(1-s)}, strata1=str1,strata2=str2,strata3=str3)
 #' 
-#' @export  
-#' 
+#' @noRd  
 wlr.cov = function(time=c(5,7,10,12,12,15,20,20), event=c(1,0,0,1,1,0,1,1),
                    group=c(0,1,0,1,0,1,0,1), strata1=NULL, strata2=NULL, strata3=NULL, 
                    rho1=0, gamma1=0, tau1 = NULL, s.tau1=0,

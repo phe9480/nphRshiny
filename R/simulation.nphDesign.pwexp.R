@@ -53,7 +53,7 @@
 #' @param logrank Indicator whether log-rank test is requested besides the weighted logrank tests. "Y" or "N". Default "Y".
 #'                 If "Y", the traditional log-rank test will be used based on survdiff() function.
 #'                 If "N", the weighted log-rank test with weighting function specified in fws will be used.
-#' @fws.options   Weighting strategies in the following format as examples. If fws.options is provided,
+#' @param fws.options   Weighting strategies in the following format as examples. If fws.options is provided,
 #' then the nphDesign object's weighting strategy will be ignored. fws can contain multiple weighting strategies.
 #'        For example, fws = list(fws1, fws2) means 2 weighting strategies are evaluated, where
 #'        fws1 = list(IA = list(lr), FA=list(lr, fh01)); fws2 = list(IA = list(lr), FA=list(fh01)). Each

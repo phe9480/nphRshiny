@@ -59,8 +59,7 @@
 #' cuts=c(6), rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
 #' Lambda = Lambda, G0 = function(t){1-exp(-drop0 * t)}, G1 = function(t){0})
 #' 
-#' @export
-
+#' @noRd
 wlr.Delta = function(DCO = 24, r = 1, 
                      h0 = function(t){log(2)/12}, S0= function(t){exp(-log(2)/12 * t)},
                      h1 = function(t){log(2)/12*0.70}, S1= function(t){exp(-log(2)/12 * 0.7 * t)}, 

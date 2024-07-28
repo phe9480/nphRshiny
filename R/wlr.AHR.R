@@ -191,7 +191,6 @@
 #' 
 #' #############
 #' #Example (4)
-#' #Comparison of KP method and (He et al) method 
 #' #Delayed effect 6 mo
 #' #############
 #' HRseq = seq(0.1, 0.9, by=0.01); L = length(HRseq)
@@ -204,11 +203,11 @@
 #'   S1.D6 = function(t){exp(-lambda0*t)*as.numeric(t<delay) + c*exp(-HR*lambda0*t)*as.numeric(t>=delay)}
 #'   f.logHR.D6 = function(t){log(as.numeric(t<6) + as.numeric(t>= 6)*HR)}
 #'   
-#'   lr = wlr.AHR(T = 48, r = 1, n = 450, h0 = h0, S0=S0,
+#'   lr = wlr.AHR(DCO = 48, r = 1, n = 450, h0 = h0, S0=S0,
 #'        h1 = h1.D6, S1=S1.D6, f.logHR = f.logHR.D6,
 #'        rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
 #'        Lambda = Lambda, G = G)
-#'   fh = wlr.AHR(T = 48, r = 1, n = 450, h0 = h0, S0=S0,
+#'   fh = wlr.AHR(DCO = 48, r = 1, n = 450, h0 = h0, S0=S0,
 #'        h1 = h1.D6, S1=S1.D6, f.logHR = f.logHR.D6,
 #'        rho = 0, gamma = 1, tau = NULL, s.tau = 0, f.ws = NULL,
 #'        Lambda = Lambda, G = G)
@@ -227,8 +226,6 @@
 #'   col=1:4, lty=1:4, bty="n", cex=0.7)
 #' ####################
 #' #Example (5)
-#' #Comparison of KP method and (He et al) method 
-#' #Proportional Hazards. Both methods equivalent
 #' ####################
 #' HRseq = seq(0.1, 0.9, by=0.01); L = length(HRseq)
 #' AHR.lr = AHR.KP.lr = AHR.fh = AHR.KP.fh = rep(NA, L)
@@ -239,11 +236,11 @@
 #'   h1.PH = function(t){lambda1}; 
 #'   S1.PH= function(t){exp(-lambda1 * t)}
 #'   
-#'   lr = wlr.AHR(T = 48, r = 1, n = 450, h0 = h0, S0=S0,
+#'   lr = wlr.AHR(DCO = 48, r = 1, n = 450, h0 = h0, S0=S0,
 #'        h1 = h1.PH, S1=S1.PH, f.logHR = f.logHR.PH,
 #'        rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
 #'        Lambda = Lambda, G = G)
-#'   fh = wlr.AHR(T = 48, r = 1, n = 450, h0 = h0, S0=S0,
+#'   fh = wlr.AHR(DCO = 48, r = 1, n = 450, h0 = h0, S0=S0,
 #'        h1 = h1.PH, S1=S1.PH, f.logHR = f.logHR.PH,
 #'        rho = 0, gamma = 1, tau = NULL, s.tau = 0, f.ws = NULL,
 #'        Lambda = Lambda, G = G)
@@ -280,11 +277,11 @@
 #'   S1.D6x = function(t){exp(-lambda0*t)*as.numeric(t<delay) + c1*exp(-HR*lambda0*t)*as.numeric(t>=delay)}
 #'   f.logHR.D6x = function(t){log(as.numeric(t < delay) 
 #'     + as.numeric(t >= delay & t < crossT)*HR + as.numeric(t >= crossT)*HRx)}
-#'   lr = wlr.AHR(T = 48, r = 1, n = 450, h0 = h0x, S0=S0x,
+#'   lr = wlr.AHR(DCO = 48, r = 1, n = 450, h0 = h0x, S0=S0x,
 #'        h1 = h1.D6x, S1=S1.D6x, f.logHR = f.logHR.D6x,
 #'        rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
 #'        Lambda = Lambda, G = G)
-#'   fh = wlr.AHR(T = 48, r = 1, n = 450, h0 = h0x, S0=S0x,
+#'   fh = wlr.AHR(DCO = 48, r = 1, n = 450, h0 = h0x, S0=S0x,
 #'        h1 = h1.D6x, S1=S1.D6x, f.logHR = f.logHR.D6x,
 #'        rho = 0, gamma = 1, tau = NULL, s.tau = 0, f.ws = NULL,
 #'        Lambda = Lambda, G = G)

@@ -18,7 +18,7 @@
 #' 
 #' plot_S(Tmax = 50, S = list(S0, S1), param=list(xlab="Time (mo)", ylab="PFS", main="PFS: HR = 0.65; Design Assumptions"))
 #' 
-#' @export
+#' @noRd
 #' 
 #' 
 plot_S = function(S = list(S0, S1), Tmax = 50,

@@ -35,7 +35,7 @@
 #' @param  strata1 Stratification variable 1
 #' @param  strata2 Stratification variable 2
 #' @param  strata3 Stratification variable 3
-#' @param  side  Type of test. one.sided or two.sided. default = two.sided
+#' @param  side  Type of test. one.sided or two.sided. default = one.sided
 #' 
 #' @return An object with dataframes below.
 #' \describe{
@@ -129,11 +129,11 @@
 wlr = function(time=c(5,7,10,12,12,15,20,20), event=c(1,0,0,1,1,0,1,1),
                group=c(0,1,0,1,0,1,0,1), strata1=NULL, strata2=NULL, strata3=NULL, 
                rho=0, gamma=1, tau = NULL, s.tau=0.5,
-               f.ws=NULL, side = c("two.sided", "one.sided")) {
+               f.ws=NULL, side = c("one.sided", "two.sided")) {
   #Unstratified version
   wlr0 = function(time=c(5,7,10,12,12,15,20,20), event=c(1,0,0,1,1,0,1,1),
                   group=c(0,1,0,1,0,1,0,1), rho=0, gamma=1, tau = NULL, s.tau=0.5, 
-                  f.ws=NULL, side = c("two.sided", "one.sided")) {
+                  f.ws=NULL, side = c("one.sided", "two.sided")) {
     
     u.eTime = unique(time[event==1]) #vector of unique event times
     u.Ne = length(u.eTime) #number of unique event times

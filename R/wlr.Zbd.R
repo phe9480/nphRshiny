@@ -70,8 +70,7 @@
 #' f.ws = list(IA1=test.IA1, IA2=test.IA2, FA=test.IA3),
 #' Lambda = Lambda, G0 = G0, G1 = G1)
 #'   
-#' @export
-#' 
+#' @noRd
 wlr.Zbd = function(DCO = c(24, 36, 48), r = 1, alpha=c(0.01, 0.02, 0.02)/2,
                    h0 = function(t){log(2)/12}, 
                    S0= function(t){exp(-log(2)/12 * t)},
