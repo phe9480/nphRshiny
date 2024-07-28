@@ -57,7 +57,7 @@
 #' #Understanding the drop off effect from two arms
 #' plot_events(n = 450, Tmax = 50, r=1, h0 = h0, S0 = S0, h1 = h0, S1 = S0, Lambda = Lambda, G0 = G0, G1 = G1)
 #' 
-#' @noRd
+#' @export
 #' 
 plot_events = function(n = 450, Tmax = 50, r=1, 
                        h0=function(t){log(2)/12}, S0=function(t){exp(-log(2)/12 * t)}, 
