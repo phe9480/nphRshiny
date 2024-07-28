@@ -104,7 +104,7 @@ wlr.Zbd = function(DCO = c(24, 36, 48), r = 1, alpha=c(0.01, 0.02, 0.02)/2,
           #incr controls the computation only limited to upper right corner
           if(incr > 0){
             #information matrix for Zij and Zi'j'
-            zcov = wlr.Zcov(DCO = c(DCO[i], DCO[ip]), r = r, 
+            zcov = nphRshiny:::wlr.Zcov(DCO = c(DCO[i], DCO[ip]), r = r, 
                             h0 = h0, S0 = S0, h1 = h1, S1 = S1, 
                             rho=NULL, gamma=NULL, tau=NULL, s.tau=NULL, 
                             f.ws = c(f.ws[[i]][[j]],f.ws[[ip]][[jp]]),

@@ -108,13 +108,13 @@ wlr.Zcov = function(DCO = c(24, 32), r = 1,
                     Hypo = "H0"){
   
   #U1 and U2 covariance
-  Ucov = wlr.Ucov(DCO = DCO, r = r, h0 = h0, S0 = S0, h1 = h1,S1 = S1, 
+  Ucov = nphRshiny:::wlr.Ucov(DCO = DCO, r = r, h0 = h0, S0 = S0, h1 = h1,S1 = S1, 
          cuts=cuts, rho = rho, gamma = gamma, tau = tau, s.tau = s.tau, f.ws = f.ws,
          Lambda = Lambda, G0 = G0, G1 = G1, Hypo = Hypo)$cov
-  sigma1_2 = wlr.sigma2(DCO = DCO[1], r = r, h0 = h0, S0 = S0,h1 = h1, S1 = S1, 
+  sigma1_2 = nphRshiny:::wlr.sigma2(DCO = DCO[1], r = r, h0 = h0, S0 = S0,h1 = h1, S1 = S1, 
                         cuts=cuts, rho = rho[1], gamma = gamma[1], tau = tau[1], s.tau = s.tau[1], f.ws=f.ws[[1]],
                         Lambda = Lambda, G0 = G0, G1 = G1, Hypo = Hypo)
-  sigma2_2 = wlr.sigma2(DCO = DCO[2], r = r, h0 = h0, S0 = S0,h1 = h1, S1 = S1, 
+  sigma2_2 = nphRshiny:::wlr.sigma2(DCO = DCO[2], r = r, h0 = h0, S0 = S0,h1 = h1, S1 = S1, 
                         cuts=cuts, rho = rho[2], gamma = gamma[2], tau = tau[2], s.tau = s.tau[2], f.ws=f.ws[[2]],
                         Lambda = Lambda, G0 = G0, G1 = G1, Hypo = Hypo)
 

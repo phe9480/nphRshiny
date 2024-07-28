@@ -156,8 +156,10 @@ simulation.pwexp = function(nSim=100, N = 600, A = 21, w=1.5, r=1, lambda0=log(2
   nEachMonth = f.nEachMonth(N=N, A=A, w=w, r=r)
   
   gamma = nEachMonth$n0 + nEachMonth$n1
-  eta0 = -log(1-dropOff0)
+  
+  eta0 = -log(1-dropOff0) #dropOff0: unit dropoff rate in control; 
   eta1 = -log(1-dropOff1)
+  #From nphsim documentation: eta <- -log(0.99) ## 1% monthly dropout rate
   
   set.seed(seed)
   o = nphsim::nphsim(nsim=nSim,lambdaC=lambda0,lambdaE=lambda1, ssC=N/(r+1), ssE=N*r/(r+1),

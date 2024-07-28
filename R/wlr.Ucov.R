@@ -58,6 +58,7 @@
 #' Hypo = "H0")
 #' 
 #' @keywords internal
+#' 
 wlr.Ucov = function(DCO = c(24, 32), r = 1, 
                     h0 = function(t){log(2)/12}, S0= function(t){exp(-log(2)/12 * t)},
                     h1 = function(t){log(2)/12*0.70}, S1= function(t){exp(-log(2)/12 * 0.7 * t)}, 
@@ -154,11 +155,11 @@ wlr.Ucov = function(DCO = c(24, 32), r = 1,
     }
     
     #Delta1 and Delta2
-    Delta1 = wlr.Delta(DCO = DCO[1], r = r, h0 = h0, S0 = S0,h1 = h1, S1 = S1, 
+    Delta1 = nphRshiny:::wlr.Delta(DCO = DCO[1], r = r, h0 = h0, S0 = S0,h1 = h1, S1 = S1, 
                        cuts=cuts, rho = rho[1], gamma = gamma[1], tau = tau[1], s.tau = s.tau[1], f.ws=f.ws[[1]],
                        Lambda = Lambda, G0 = G0, G1 = G1)
     
-    Delta2 = wlr.Delta(DCO = DCO[2], r = r, h0 = h0, S0 = S0,h1 = h1, S1 = S1, 
+    Delta2 = nphRshiny:::wlr.Delta(DCO = DCO[2], r = r, h0 = h0, S0 = S0,h1 = h1, S1 = S1, 
                        cuts=cuts, rho = rho[2], gamma = gamma[2], tau = tau[2], s.tau = s.tau[2], f.ws=f.ws[[2]],
                        Lambda = Lambda, G0 = G0, G1 = G1)
     Cv1 = Cv1a - Delta1*Delta2

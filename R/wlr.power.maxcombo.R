@@ -7,7 +7,13 @@
 #' @param alpha Allocated one-sided alpha levels. sum(alpha) is the total type I error.
 #'           If alpha spending function a(t) is used for information time c(t1, ..., tK),
 #'           then alpha1 = a(t1), alpha2 = a(t2)-a(t1), ..., alphaK = a(tK)-a(t_{K-1}),
-#'           and the total alpha for all analyses is a(tK).
+#'           and the total alpha for all analyses is a(tK). Default = NULL and use sf method. When alpha is specified, ignore sf method.
+#' @param  overall.alpha  Allocated overall alpha (one-sided) for group sequential design
+#' @param  sf Spending function. Acceptable types include: (1) LanDeMets O'Brien Fleming: "LDOF", (2) LanDeMets Pocock: "LDPK", (3) Hwang-Shih-DeCani: "HSD" with parameter param. (4) Haybittle-Peto: "Haybittle-Peto". (5) Bespoke: "Bespoke"
+#' @param param parameter for Hwang-Shih-DeCani spending function
+#' @param p1 A fixed p value boundary for IAs (one-sided), which is applicable to Haybittle-Peto alpha spending only.
+#' @param cum.alpha Cumulative alpha spending by analysis, which is applicable to Bespoke method only. Cum.alpha must have the same length as timing.
+#'           
 #' @param bd  Rejection boundary in normalized Z. If bd is NULL, then the boundaries 
 #'           will be calculated based on alpha at each analysis time T. Default bd = NULL.
 #'           If bd is provided, then alpha is ignored. Default NULL.
@@ -81,8 +87,61 @@
 #' G0 = function(t){0}; G1 = function(t){0}; 
 #' 
 #' #Schoenfeld method with power based on covariance matrix under H0
+#' #(a) Directly provide incremental alpha with IA spent 0.005.
+#' 
 #' wlr.power.maxcombo(DCO = c(24, 36),  
 #'   alpha=c(0.01, 0.04)/2, 
+#'   overall.alpha=NULL, sf = NULL, param=NULL, p1=NULL, cum.alpha=NULL, 
+#'   r = 1, n = 500, 
+#'   h0 = h0, S0=S0,h1 = h.D3, S1= S.D3, 
+#'   f.ws = list(IA1 = list(lr), FA=list(fh01)), 
+#'   Lambda=Lambda, G0=G0, G1=G1,
+#'   mu.method = "Schoenfeld", cov.method = "H0")
+#'   
+#'  #(b) LD OBF spending method
+#'  wlr.power.maxcombo(DCO = c(24, 36),  
+#'   alpha=NULL,
+#'   overall.alpha=0.025, sf = "LDOF", param=NULL, p1=NULL, cum.alpha=NULL,   
+#'   r = 1, n = 500, 
+#'   h0 = h0, S0=S0,h1 = h.D3, S1= S.D3, 
+#'   f.ws = list(IA1 = list(lr), FA=list(fh01)), 
+#'   Lambda=Lambda, G0=G0, G1=G1,
+#'   mu.method = "Schoenfeld", cov.method = "H0")
+#'      
+#'  #(c) HSD (-3) spending method
+#'  wlr.power.maxcombo(DCO = c(24, 36),  
+#'   alpha=NULL,
+#'   overall.alpha=0.025, sf = "HSD", param=-3, p1=NULL, cum.alpha=NULL,   
+#'   r = 1, n = 500, 
+#'   h0 = h0, S0=S0,h1 = h.D3, S1= S.D3, 
+#'   f.ws = list(IA1 = list(lr), FA=list(fh01)), 
+#'   Lambda=Lambda, G0=G0, G1=G1,
+#'   mu.method = "Schoenfeld", cov.method = "H0")
+#'   
+#'  #(d) Haybitte-Peto spending method
+#'  wlr.power.maxcombo(DCO = c(24, 36),  
+#'   alpha=NULL,
+#'   overall.alpha=0.025, sf = "Haybittle-Peto", param=NULL, p1=0.0003, cum.alpha=NULL,   
+#'   r = 1, n = 500, 
+#'   h0 = h0, S0=S0,h1 = h.D3, S1= S.D3, 
+#'   f.ws = list(IA1 = list(lr), FA=list(fh01)), 
+#'   Lambda=Lambda, G0=G0, G1=G1,
+#'   mu.method = "Schoenfeld", cov.method = "H0")
+#'   
+#'  #(e) Bespoke spending method
+#'  wlr.power.maxcombo(DCO = c(24, 36),  
+#'   alpha=NULL,
+#'   overall.alpha=0.025, sf = "Bespoke", param=NULL, p1=NULL, cum.alpha=c(0.0003, 0.025),   
+#'   r = 1, n = 500, 
+#'   h0 = h0, S0=S0,h1 = h.D3, S1= S.D3, 
+#'   f.ws = list(IA1 = list(lr), FA=list(fh01)), 
+#'   Lambda=Lambda, G0=G0, G1=G1,
+#'   mu.method = "Schoenfeld", cov.method = "H0")
+#'   
+#'  #(f) LD Pocock spending method
+#'  wlr.power.maxcombo(DCO = c(24, 36),  
+#'   alpha=NULL,
+#'   overall.alpha=0.025, sf = "LDPK", param=NULL, p1=NULL, cum.alpha=NULL,   
 #'   r = 1, n = 500, 
 #'   h0 = h0, S0=S0,h1 = h.D3, S1= S.D3, 
 #'   f.ws = list(IA1 = list(lr), FA=list(fh01)), 
@@ -158,7 +217,7 @@
 #' 
 #'
 wlr.power.maxcombo = function(n = 600, r = 1, DCO = c(24, 36), 
-            alpha=c(0.02, 0.03)/2,   
+            alpha=NULL, overall.alpha=0.025, sf="LDOBF", param=NULL, p1=NULL, cum.alpha=NULL,
             h0 = function(t){log(2)/12}, S0= function(t){exp(-log(2)/12 * t)},
             h1 = function(t){log(2)/12*0.70}, S1= function(t){exp(-log(2)/12 * 0.7 * t)}, 
             f.ws = list(IA1=list(function(s){1}), FA=list(function(s){1}, function(s){s*(1-s)})), 
@@ -185,12 +244,20 @@ wlr.power.maxcombo = function(n = 600, r = 1, DCO = c(24, 36),
     targetEvents0[i] = e.tmp$e0
     targetEvents1[i] = e.tmp$e1
   }
-    
+  targetEvents = targetEvents0 + targetEvents1
+  
+  information = targetEvents / targetEvents[K]
+  
+  #Incremental alpha
+  if (is.null(alpha)){
+    alpha = nphRshiny:::f.alpha(overall.alpha=overall.alpha, sf=sf, timing=information, p1=p1, cum.alpha=cum.alpha, param=param)
+  }
+  
   #Mean(Z)
   mu = matrix(NA, nrow=K, ncol=max(J))
   for(i in 1:K){
     for(j in 1:J[[i]]){
-      mu[i, j] = wlr.mu(n=n, DCO = DCO[i], r=r, h0 = h0, S0=S0, h1 = h1, S1=S1,
+      mu[i, j] = nphRshiny:::wlr.mu(n=n, DCO = DCO[i], r=r, h0 = h0, S0=S0, h1 = h1, S1=S1,
                         rho = NULL, gamma = NULL, tau = NULL, s.tau = NULL, 
                         f.ws = f.ws[[i]][[j]], Lambda = Lambda, 
                         G0 = G0, G1 = G1, mu.method = mu.method)
@@ -209,7 +276,7 @@ wlr.power.maxcombo = function(n = 600, r = 1, DCO = c(24, 36),
     for (j in 1:J[[i]]){
       row = as.numeric(i>=2)*sum(J[1:(i-1)])+j #row location of the cov matrix
       Omega0[row, row] = 1
-      Omega1[row, row] = wlr.Zcov(DCO = c(DCO[i], DCO[i]), r=r, 
+      Omega1[row, row] = nphRshiny:::wlr.Zcov(DCO = c(DCO[i], DCO[i]), r=r, 
                                   h0 = h0, S0=S0, h1 = h1, S1=S1,
                                   cuts = cuts, rho=NULL, gamma=NULL, 
                                   tau=NULL, s.tau=NULL,
@@ -223,7 +290,7 @@ wlr.power.maxcombo = function(n = 600, r = 1, DCO = c(24, 36),
           col = row + incr
           #incr controls the computation only limited to upper right corner
           if(incr > 0){
-            Omega0[row, col] = wlr.Zcov(DCO = c(DCO[i], DCO[ip]), r=r, 
+            Omega0[row, col] = nphRshiny:::wlr.Zcov(DCO = c(DCO[i], DCO[ip]), r=r, 
                                         h0 = h0, S0=S0, h1 = h1, S1=S1,
                                         cuts = cuts, rho=NULL, gamma=NULL, 
                                         tau=NULL, s.tau=NULL,
@@ -231,7 +298,7 @@ wlr.power.maxcombo = function(n = 600, r = 1, DCO = c(24, 36),
                                         Lambda = Lambda, G0 = G0, G1 = G1, 
                                         Hypo = "H0")
             Omega0[col, row] = Omega0[row, col]
-            Omega1[row, col] = wlr.Zcov(DCO = c(DCO[i], DCO[ip]), r=r, 
+            Omega1[row, col] = nphRshiny:::wlr.Zcov(DCO = c(DCO[i], DCO[ip]), r=r, 
                                         h0 = h0, S0=S0, h1 = h1, S1=S1,
                                         cuts = cuts, rho=NULL, gamma=NULL, 
                                         tau=NULL, s.tau=NULL,
@@ -351,7 +418,6 @@ wlr.power.maxcombo = function(n = 600, r = 1, DCO = c(24, 36),
   m0 = uniroot(f.m0, interval= c(1, 100), tol = 1e-8)$root
   m1 = uniroot(f.m1, interval= c(1, 100), tol = 1e-8)$root
   medians = c(m0, m1)
-  targetEvents = targetEvents0 + targetEvents1
   
   #######Critical Values (Outside the scope of the manuscript)######
   CV.HR.H0 = CV.HR.H1 = rep(NULL, K)
@@ -397,7 +463,6 @@ wlr.power.maxcombo = function(n = 600, r = 1, DCO = c(24, 36),
   }
   N = rep(n, K)
   overall.power = rep(overall.power, K)
-  information = targetEvents / targetEvents[K]
   
   o$design = data.frame(cbind(N, Analysis, DCO, targetEvents, information, maturity, power, incr.power, cum.power, overall.power, bd, p, CV.HR.H0, CV.HR.H1))
   o$Expected_HR = Expected_HR
