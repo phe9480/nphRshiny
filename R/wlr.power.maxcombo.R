@@ -128,7 +128,17 @@
 #'   Lambda=Lambda, G0=G0, G1=G1,
 #'   mu.method = "Schoenfeld", cov.method = "H0")
 #'   
-#'  #(e) Bespoke spending method
+#'  #(d2) Haybitte-Peto spending method, logrank test
+#'  wlr.power.maxcombo(DCO = c(24, 36),  
+#'   alpha=NULL,
+#'   overall.alpha=0.025, sf = "Haybittle-Peto", param=NULL, p1=0.0003, cum.alpha=NULL,   
+#'   r = 1, n = 500, 
+#'   h0 = h0, S0=S0,h1 = h.D3, S1= S.D3, 
+#'   f.ws = list(IA1 = list(lr), FA=list(lr)), 
+#'   Lambda=Lambda, G0=G0, G1=G1,
+#'   mu.method = "Schoenfeld", cov.method = "H0")
+#'   
+#'   #(e) Bespoke spending method
 #'  wlr.power.maxcombo(DCO = c(24, 36),  
 #'   alpha=NULL,
 #'   overall.alpha=0.025, sf = "Bespoke", param=NULL, p1=NULL, cum.alpha=c(0.0003, 0.025),   
