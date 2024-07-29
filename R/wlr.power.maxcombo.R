@@ -52,15 +52,18 @@
 #'  \item  n:      Total number of subjects for two arms
 #'  \item  DCO:    Expected analysis time
 #'  \item  targetEvents: Expected number of events
+#'  \item  information: Information fraction as event ratio
 #'  \item  maturity Expected proportion of subjects with events
+#'  \item  alpha: Incremental alpha (one-sided)
+#'  \item  cum.alpha: Cumulative alpha (one-sided)
 #'  \item  power:  Nominal power at each analysis
 #'  \item  overall.power Overall power of the study
 #'  \item  incr.power Incremental power for each analysis. 
 #'                  The sum of all incremental powers is the overall power.
-#'  \item  medians: Median of each treatment group
 #'  \item  bd:    Expected rejection boundary in z value
 #'  \item  p:     Expected rejection boundary in p value
-#'  \item  Expected_HR: Expected HR
+#'  \item  Average.HR: Expected HR
+#'  \item  Average_HR.KP: Expected HR using KP method
 #'  }
 #'  Omega0: Covariance matrix under H0; 
 #'  Omega1: Covariance matrix for power calculation request in cov.method.
@@ -480,7 +483,12 @@ wlr.power.maxcombo = function(n = 600, r = 1, DCO = c(24, 36),
     Average.HR[i] = Expected_HR[[i]]$AHR
     Average.HR.KP[i] = Expected_HR[[i]]$AHR.KP
   }
-  o$design = data.frame(cbind(N, Analysis, DCO, targetEvents, information, maturity, power, incr.power, cum.power, overall.power, bd, p, CV.HR.H0, CV.HR.H1, Average.HR, Average.HR.KP, medians))
+  
+  cum.alpha = rep(NA, K)
+  for (i in 1:K){cum.alpha[i] = sum(alpha[1:i])}
+  
+  o$design = data.frame(cbind(N, Analysis, DCO, targetEvents, information, maturity, alpha, cum.alpha, power, incr.power, cum.power, overall.power, bd, p, CV.HR.H0, CV.HR.H1, Average.HR, Average.HR.KP))
+  o$medians = medians
   
   return(o)
 }
