@@ -126,15 +126,18 @@ An object with dataframes below.
 \item  n:      Total number of subjects for two arms
 \item  DCO:    Expected analysis time
 \item  targetEvents: Expected number of events
+\item  information: Information fraction as event ratio
 \item  maturity Expected proportion of subjects with events
+\item  alpha: Incremental alpha (one-sided)
+\item  cum.alpha: Cumulative alpha (one-sided)
 \item  power:  Nominal power at each analysis
 \item  overall.power Overall power of the study
 \item  incr.power Incremental power for each analysis.
 The sum of all incremental powers is the overall power.
-\item  medians: Median of each treatment group
 \item  bd:    Expected rejection boundary in z value
 \item  p:     Expected rejection boundary in p value
-\item  Expected_HR: Expected HR
+\item  Average.HR: Expected HR
+\item  Average_HR.KP: Expected HR using KP method
 }
 Omega0: Covariance matrix under H0;
 Omega1: Covariance matrix for power calculation request in cov.method.
