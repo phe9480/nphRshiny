@@ -4,7 +4,7 @@
 #' Specifically, incremental alpha_k = P(reject H0 at kth analysis while not rejecting H0 at all previous analyses)
 #' 
 #' @param  overall.alpha  Allocated overall alpha (one-sided) for group sequential design
-#' @param  sf Spending function. Acceptable types include: (1)LanDeMets O'Brien Fleming: "LDOF", LanDeMets Pocock: "LDPK", "HSD": Hwang-Shih-DeCani spending function with parameter param.
+#' @param  sf Spending function. Acceptable types include: (1) LanDeMets O'Brien Fleming: "LDOF", (2) LanDeMets Pocock: "LDPK", (3) Hwang-Shih-DeCani: "HSD" with parameter param. (4) Haybittle-Peto: "Haybittle-Peto". (5) Bespoke: "Bespoke"
 #' @param  timing Information fractions of analyses, for example timing = c(0.6, 0.75, 1.0).
 #' @param param parameter for Hwang-Shih-DeCani spending function
 #' @param p1 A fixed p value boundary for IAs (one-sided), which is applicable to Haybittle-Peto alpha spending only.
@@ -28,7 +28,8 @@
 #' #(5) Bespoke method with cumulative alpha spending as c(0.0003, 0.01, 0.025). In this method, the last element of cum.alpha must be equal to overall.alpha.
 #' f.alpha(overall.alpha = 0.025, sf="Bespoke", timing = c(0.5, 0.7, 1), cum.alpha = c(0.0003, 0.01, 0.025))
 #' 
-#' @export
+#' @keywords internal
+#' 
 #' 
 f.alpha = function(overall.alpha=0.025, sf="LDOF", timing=c(0.75, 1), p1=NULL, cum.alpha=NULL, param=-3){
   K = length(timing)

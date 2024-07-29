@@ -95,7 +95,7 @@
 #'      Lambda = Lambda, cuts=NULL)
 #'      
 #' 
-#' @noRd
+#' @keywords internal
 wlr.asym = function(DCO = 24, r = 1, n = 450, 
        h0 = function(t){log(2)/12}, S0= function(t){exp(-log(2)/12 * t)},
        h1 = function(t){log(2)/12*0.70}, S1= function(t){exp(-log(2)/12 * 0.7 * t)}, 

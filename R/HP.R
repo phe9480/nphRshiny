@@ -9,10 +9,16 @@
 #' @param  p1 A fixed p value boundary for IAs (one-sided)
 #' 
 #' @examples 
-#' #Group sequential tests at information times 0.5, 0.7, 1.0 with overall alpha 0.025.
-#' #IA1 and IA2 have a rejection boundary p = 0.0003 (one-sided).
 #' 
+#' #(1) Group sequential tests at information times 0.5, 0.7, 1.0 with overall alpha 0.025.
+#' #IA1 and IA2 have a rejection boundary p = 0.0003 (one-sided).
+#'  
 #' HP(p1 = 3e-04, overall.alpha = 0.025, timing = c(0.5, 0.7, 1))
+#' 
+#' (2) HP method at 0.7 information fraction after 0.0001/2 administrative alpha spent
+#' HP(p1 = 0.002/2, overall.alpha = 0.025-0.0001/2, timing = c(0.7, 1))
+#' 
+#' HP(p1 = 0.002/2, overall.alpha = 0.025, timing = c(0.7, 1)) #without admin alpha spent
 #' 
 #' @return An object with dataframe below.
 #'  \itemize{

@@ -94,7 +94,7 @@
 #' Hypo = "H0")
 #' 
 #' 
-#' @noRd
+#' @keywords internal
 #' 
 #' 
 wlr.Zcov = function(DCO = c(24, 32), r = 1, 

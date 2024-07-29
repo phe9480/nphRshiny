@@ -120,7 +120,7 @@
 #' #(4) Correlation between FH(0, 1) test at IA and FH(0, 1) test at FA
 #' v4 = wlr.cov2t(time1=data.IA$survTimeCut, event1=1-data.IA$cnsrCut, time2=data.FA$survTimeCut, event2=1-data.FA$cnsrCut, group=group, rho1=0, gamma1=1, tau1 = NULL, s.tau1=0,rho2=0, gamma2=1, tau2 = NULL, s.tau2=0,f.ws1=NULL, f.ws2=NULL, strata1=NULL, strata2=NULL, strata3=NULL)
 #' 
-#' @noRd 
+#' @keywords internal 
 wlr.cov2t = function(time1=c(5,7,10,12,12,15,20,20), event1=c(1,0,0,1,1,0,1,1),
                      time2=c(5,10,13,12,14,15,20,20), event2=c(1,0,1,1,1,1,1,1),
                      group=c(0,1,0,1,0,1,0,1), strata1=NULL, strata2=NULL, strata3=NULL, 
