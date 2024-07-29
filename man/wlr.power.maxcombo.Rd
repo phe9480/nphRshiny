@@ -8,7 +8,12 @@ wlr.power.maxcombo(
   n = 600,
   r = 1,
   DCO = c(24, 36),
-  alpha = c(0.02, 0.03)/2,
+  alpha = NULL,
+  overall.alpha = 0.025,
+  sf = "LDOBF",
+  param = NULL,
+  p1 = NULL,
+  cum.alpha = NULL,
   h0 = function(t) {
      log(2)/12
  },
@@ -54,7 +59,17 @@ When r = 1, it is equal allocation. Default r = 1.}
 \item{alpha}{Allocated one-sided alpha levels. sum(alpha) is the total type I error.
 If alpha spending function a(t) is used for information time c(t1, ..., tK),
 then alpha1 = a(t1), alpha2 = a(t2)-a(t1), ..., alphaK = a(tK)-a(t_{K-1}),
-and the total alpha for all analyses is a(tK).}
+and the total alpha for all analyses is a(tK). Default = NULL and use sf method. When alpha is specified, ignore sf method.}
+
+\item{overall.alpha}{Allocated overall alpha (one-sided) for group sequential design}
+
+\item{sf}{Spending function. Acceptable types include: (1) LanDeMets O'Brien Fleming: "LDOF", (2) LanDeMets Pocock: "LDPK", (3) Hwang-Shih-DeCani: "HSD" with parameter param. (4) Haybittle-Peto: "Haybittle-Peto". (5) Bespoke: "Bespoke"}
+
+\item{param}{parameter for Hwang-Shih-DeCani spending function}
+
+\item{p1}{A fixed p value boundary for IAs (one-sided), which is applicable to Haybittle-Peto alpha spending only.}
+
+\item{cum.alpha}{Cumulative alpha spending by analysis, which is applicable to Bespoke method only. Cum.alpha must have the same length as timing.}
 
 \item{h0}{Hazard function of control arm. h0(t) = log(2)/m0 means T~exponential distribution with median m0.}
 
@@ -149,8 +164,71 @@ Lambda = function(t){(t/18)^1.5*as.numeric(t <= 18) + as.numeric(t > 18)};
 G0 = function(t){0}; G1 = function(t){0}; 
 
 #Schoenfeld method with power based on covariance matrix under H0
+#(a) Directly provide incremental alpha with IA spent 0.005.
+
 wlr.power.maxcombo(DCO = c(24, 36),  
   alpha=c(0.01, 0.04)/2, 
+  overall.alpha=NULL, sf = NULL, param=NULL, p1=NULL, cum.alpha=NULL, 
+  r = 1, n = 500, 
+  h0 = h0, S0=S0,h1 = h.D3, S1= S.D3, 
+  f.ws = list(IA1 = list(lr), FA=list(fh01)), 
+  Lambda=Lambda, G0=G0, G1=G1,
+  mu.method = "Schoenfeld", cov.method = "H0")
+  
+ #(b) LD OBF spending method
+ wlr.power.maxcombo(DCO = c(24, 36),  
+  alpha=NULL,
+  overall.alpha=0.025, sf = "LDOF", param=NULL, p1=NULL, cum.alpha=NULL,   
+  r = 1, n = 500, 
+  h0 = h0, S0=S0,h1 = h.D3, S1= S.D3, 
+  f.ws = list(IA1 = list(lr), FA=list(fh01)), 
+  Lambda=Lambda, G0=G0, G1=G1,
+  mu.method = "Schoenfeld", cov.method = "H0")
+     
+ #(c) HSD (-3) spending method
+ wlr.power.maxcombo(DCO = c(24, 36),  
+  alpha=NULL,
+  overall.alpha=0.025, sf = "HSD", param=-3, p1=NULL, cum.alpha=NULL,   
+  r = 1, n = 500, 
+  h0 = h0, S0=S0,h1 = h.D3, S1= S.D3, 
+  f.ws = list(IA1 = list(lr), FA=list(fh01)), 
+  Lambda=Lambda, G0=G0, G1=G1,
+  mu.method = "Schoenfeld", cov.method = "H0")
+  
+ #(d) Haybitte-Peto spending method
+ wlr.power.maxcombo(DCO = c(24, 36),  
+  alpha=NULL,
+  overall.alpha=0.025, sf = "Haybittle-Peto", param=NULL, p1=0.0003, cum.alpha=NULL,   
+  r = 1, n = 500, 
+  h0 = h0, S0=S0,h1 = h.D3, S1= S.D3, 
+  f.ws = list(IA1 = list(lr), FA=list(fh01)), 
+  Lambda=Lambda, G0=G0, G1=G1,
+  mu.method = "Schoenfeld", cov.method = "H0")
+  
+ #(d2) Haybitte-Peto spending method, logrank test
+ wlr.power.maxcombo(DCO = c(24, 36),  
+  alpha=NULL,
+  overall.alpha=0.025, sf = "Haybittle-Peto", param=NULL, p1=0.0003, cum.alpha=NULL,   
+  r = 1, n = 500, 
+  h0 = h0, S0=S0,h1 = h.D3, S1= S.D3, 
+  f.ws = list(IA1 = list(lr), FA=list(lr)), 
+  Lambda=Lambda, G0=G0, G1=G1,
+  mu.method = "Schoenfeld", cov.method = "H0")
+  
+  #(e) Bespoke spending method
+ wlr.power.maxcombo(DCO = c(24, 36),  
+  alpha=NULL,
+  overall.alpha=0.025, sf = "Bespoke", param=NULL, p1=NULL, cum.alpha=c(0.0003, 0.025),   
+  r = 1, n = 500, 
+  h0 = h0, S0=S0,h1 = h.D3, S1= S.D3, 
+  f.ws = list(IA1 = list(lr), FA=list(fh01)), 
+  Lambda=Lambda, G0=G0, G1=G1,
+  mu.method = "Schoenfeld", cov.method = "H0")
+  
+ #(f) LD Pocock spending method
+ wlr.power.maxcombo(DCO = c(24, 36),  
+  alpha=NULL,
+  overall.alpha=0.025, sf = "LDPK", param=NULL, p1=NULL, cum.alpha=NULL,   
   r = 1, n = 500, 
   h0 = h0, S0=S0,h1 = h.D3, S1= S.D3, 
   f.ws = list(IA1 = list(lr), FA=list(fh01)), 
