@@ -28,8 +28,7 @@
 #' #(5) Bespoke method with cumulative alpha spending as c(0.0003, 0.01, 0.025). In this method, the last element of cum.alpha must be equal to overall.alpha.
 #' f.alpha(overall.alpha = 0.025, sf="Bespoke", timing = c(0.5, 0.7, 1), cum.alpha = c(0.0003, 0.01, 0.025))
 #' 
-#' @keywords internal
-#' 
+#' @export
 #' 
 f.alpha = function(overall.alpha=0.025, sf="LDOF", timing=c(0.75, 1), p1=NULL, cum.alpha=NULL, param=-3){
   K = length(timing)

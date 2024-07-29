@@ -24,7 +24,9 @@
 #'  \itemize{
 #'  \item  p: Rejection boundary in p value (one-sided)
 #'  \item  z: Rejection boundary in z value
-#'  \item  alpha Incremental alpha(one-sided). 
+#'  \item  alpha Incremental alpha(one-sided)
+#'  \item cum.alpha Cumulative alpha(one-sided)
+#'  \item overall.alpha Overall alpha(one-sided)
 #'  }
 #'  
 #' @export
@@ -71,9 +73,9 @@ HP <- function (p1 = 3e-04, overall.alpha = 0.025, timing = c(0.5, 0.7, 1)) {
   }
   p = c(rep(p1, M - 1), pf)
   z = c(rep(z1, M - 1), zf)
-  alpha = a
-  
-  o = data.frame(cbind(p, z, alpha))
+  alpha = a; cum.alpha = rep(NA, M)
+  for (i in 1:M){cum.alpha[i] = sum(alpha[1:i])}
+  o = data.frame(cbind(p, z, alpha, cum.alpha, overall.alpha))
   return(o)
 }
 

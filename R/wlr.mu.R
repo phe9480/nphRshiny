@@ -48,26 +48,36 @@
 #' Lambda = function(t){(t/18)^1.5*as.numeric(t <= 18) + as.numeric(t > 18)}
 #' drop0 = 0.03/12; drop1 = 0
 #' 
-#' Delta = wlr.Delta(DCO = 24, r = 1, h0 = h0, S0 = S0, h1 = h1.D6, S1 = S1.D6, 
+#' #Delta
+#' Delta = nphRshiny:::wlr.Delta(DCO = 24, r = 1, h0 = h0, S0 = S0, h1 = h1.D6, S1 = S1.D6, 
 #' cuts=c(6), rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
 #' Lambda = Lambda, G0 = function(t){1-exp(-drop0 * t)}, G1 = function(t){0})
+#' Delta
 #' #-0.02315818
 #' 
-#' sig2=wlr.sigma2(DCO = 24, r = 1, h0 = h0, S0 = S0,h1 = h1.D6,S1 = S1.D6, 
+#' #sigma^2
+#' sig2 = nphRshiny:::wlr.sigma2(DCO = 24, r = 1, h0 = h0, S0 = S0,h1 = h1.D6,S1 = S1.D6, 
 #' cuts=c(6), rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
 #' Lambda = Lambda, G0 = function(t){1-exp(-drop0 * t)}, G1 = function(t){0})
+#' sig2
+#' #0.1185331
 #' 
 #' #sqrt(600)*Delta/sqrt(sig2)
+#' 
+#' sqrt(600)*Delta/sqrt(sig2)
+#' #-1.647632
 #' 
 #' wlr.mu(DCO = 24, r = 1, h0 = h0, S0 = S0,h1 = h1.D6,S1 = S1.D6, 
 #' cuts=c(6), rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
 #' Lambda = Lambda, G0 = function(t){1-exp(-drop0 * t)}, G1 = function(t){0},
 #' mu.method="H1")
+#' #1.647632
 #' 
 #' wlr.mu(DCO = 24, r = 1, h0 = h0, S0 = S0,h1 = h1.D6,S1 = S1.D6, 
 #' cuts=c(6), rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
 #' Lambda = Lambda, G0 = function(t){1-exp(-drop0 * t)}, G1 = function(t){0},
 #' mu.method="Schoenfeld")
+#' #1.656127
 #' 
 #' @export
 wlr.mu = function(DCO = 24, n=600, r = 1, 
