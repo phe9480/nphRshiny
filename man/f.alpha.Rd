@@ -49,4 +49,3 @@ f.alpha(overall.alpha = 0.025, sf="Haybittle-Peto", timing = c(0.5, 0.7, 1), p1 
 f.alpha(overall.alpha = 0.025, sf="Bespoke", timing = c(0.5, 0.7, 1), cum.alpha = c(0.0003, 0.01, 0.025))
 
 }
-\keyword{internal}
