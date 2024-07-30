@@ -1,11 +1,14 @@
-#' Cumulative Distribution Function for Mixture Cure Rate Distribution
+#' Cumulative Distribution Function for Mixture Cure Rate Distribution With Delayed Effect
 #' 
 #' Consider the survival function of mixture cure rate (MCR) distribution: 
 #' S(t) = p + (1-p)S0(t), where S0(t) is a survival distribution 
 #' for susceptible subject, i.e., S0(0)=1 and S0(t) -> 0 as t -> Infinity.
 #' S0(t) can be any proper survival function. For generality of S0(t), consider 
 #' the generalized modified Weibull (GMW) distribution with parameters 
-#' (alpha, beta, gamma, lambda) Martinez et al(2013). 
+#' (alpha, beta, gamma, lambda) Martinez et al(2013). A delayed effect tau is also incorporated.
+#' The delayed effect will modify the survival function after tau corresponding to the hazard ratio.
+#' i.e. if psi = 0.6, and tau = 6 months, then after tau, the survival function is assumed having HR 0.6 compared to mcr(p, alpha, beta, gamma, lambda).
+#' This feature is convenient when modeling delayed effect on top of MCR.
 #' 
 #' alpha: scale parameter
 #' beta and gamma: shape parameters
@@ -33,7 +36,8 @@
 #' In reference to S(t), S1(t) is a delayed effect distribution and proportional hazards after delay.
 #' 
 #' MCR(p, alpha, beta, gamma, lambda, tau, psi=1) reduces to S(t)
-#' MCR(p, alpha, beta, gamma, lambda, tau=0, psi) reduces to S(t)^psi, i.e. proportional hazards.
+#' MCR(p, alpha, beta, gamma, lambda, tau=0, psi=0.6) means a distribution having proportional hazard HR=0.6 compared to MCR(p, alpha, beta, gamma, lambda).
+#' MCR(p, alpha, beta, gamma, lambda, tau=6, psi=0.6) means a distribution having a delayed effect 6 months and afterwards proportional hazard HR=0.6 compared to MCR(p, alpha, beta, gamma, lambda).
 #' MCR(p=0, alpha, beta, gamma, lambda, tau=0, psi=1) reduces to S0(t)
 #' MCR(p=0, alpha, beta=1, gamma=1, lambda=0, tau=0, psi=1) reduces to exponential dist.
 #' 
@@ -65,6 +69,11 @@
 #' #(4) GMW distribution mixture with cure rate 0.15
 #' c4 = sapply(t, pmcr, p = 0.15, alpha = log(2)/12, beta=1, gamma=1, lambda=0.2)
 #' plot(t, 1-c4, type="l", ylab="", main="Survival Function", ylim=c(0,1))
+#' 
+#' #(5) Weibull distribution mixture with cure rate 0.15 with delayed effect 6 months
+#' c5 = sapply(t, pmcr, p=0.15, alpha = log(2)/12, beta=1, gamma=0.8, lambda=0, tau=6, psi=0.6)
+#' plot(t, 1-c5, type="l", ylab="", main="Survival Function", ylim=c(0,1))
+#' lines(t, 1-c2, col=2)
 #' 
 #' @export
 #' 
