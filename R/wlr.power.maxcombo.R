@@ -39,10 +39,12 @@
 #' @param f.ws  Self-defined weight function of survival rate, eg, f.ws = function(s){1/max(s, 0.25)}
 #'         When f.ws is specified, sFH parameter will be ignored.
 #' @param Lambda Cumulative distribution function of enrollment. 
-#' @param G0 Cumulative distribution function of drop-off for control arm, eg, G0=function(t){1-exp(-0.03/12*t)}
-#'               is the distribution function for 3 percent drop-off in 12 months of followup.
-#' @param G1 Cumulative distribution function of drop-off for experimental arm, eg, G1=function(t){1-exp(-0.03/12*t)}
-#'               is the distribution function for 3 percent drop-off in 12 months of followup.
+#' @param G0 Cumulative distribution function of drop-off for control arm. 
+#' For example, 3 percent drop-off in 12 months of followup means then the hazard rate for unit time 
+#' is eta0 = -log(1-0.03/12), so G0=function(t){1-exp(-eta0*t)}.
+#' @param G1 Cumulative distribution function of drop-off for experimental arm. 
+#' Similarly, G1=function(t){1-exp(-eta1*t)}, where eta1=-log(1-0.03/12) is the 
+#' hazard rate for 3 percent drop-off in 12 months of followup.  
 #' @param mu.method Method for mean of weighted logrank test Z statistic. 
 #' "Schoenfeld" or "H1"
 #' @param cov.method Method for covariance matrix calculation in power calculation: 
