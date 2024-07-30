@@ -91,11 +91,13 @@ If cuts is not specified or incorrectly specified, it might occasionally have nu
 
 \item{Lambda}{Cumulative distribution function of enrollment.}
 
-\item{G0}{Cumulative distribution function of drop-off for control arm, eg, G0=function(t){1-exp(-0.03/12*t)}
-is the distribution function for 3 percent drop-off in 12 months of followup.}
+\item{G0}{Cumulative distribution function of drop-off for control arm.
+For example, 3 percent drop-off in 12 months of followup means then the hazard rate for unit time
+is eta0 = -log(1-0.03/12), so G0=function(t){1-exp(-eta0*t)}.}
 
-\item{G1}{Cumulative distribution function of drop-off for experimental arm, eg, G1=function(t){1-exp(-0.03/12*t)}
-is the distribution function for 3 percent drop-off in 12 months of followup.}
+\item{G1}{Cumulative distribution function of drop-off for experimental arm.
+Similarly, G1=function(t){1-exp(-eta1*t)}, where eta1=-log(1-0.03/12) is the
+hazard rate for 3 percent drop-off in 12 months of followup.}
 
 \item{mu.method}{Method for mean of weighted logrank test Z statistic.
 "Schoenfeld" or "H1"}

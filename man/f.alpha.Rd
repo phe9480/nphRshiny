@@ -48,4 +48,12 @@ f.alpha(overall.alpha = 0.025, sf="Haybittle-Peto", timing = c(0.5, 0.7, 1), p1 
 #(5) Bespoke method with cumulative alpha spending as c(0.0003, 0.01, 0.025). In this method, the last element of cum.alpha must be equal to overall.alpha.
 f.alpha(overall.alpha = 0.025, sf="Bespoke", timing = c(0.5, 0.7, 1), cum.alpha = c(0.0003, 0.01, 0.025))
 
+#(6) Alpha spending for IA vs information fraction
+t = seq(0.01, 1, by=0.01)
+a = rep(NA, length(t))
+for (i in 1:length(t)){
+  a[i] = f.alpha(overall.alpha = 0.025, sf="LDOF", timing = c(t[i], 1), p1 = NULL)[1]
+}
+plot(t, a, type="l", xlab="Information Time", ylab = "IA Alpha Spending")
+
 }
