@@ -138,6 +138,8 @@ An object with dataframes below.
 The sum of all incremental powers is the overall power.
 \item  bd:    Expected rejection boundary in z value
 \item  p:     Expected rejection boundary in p value
+\item  CV.HR.H0 Critical value in HR for variance estimated under H0. Available only when logrank test is used at an analysis.
+\item  CV.HR.H1 Critical value in HR for variance estimated using cov.method.  Available only when logrank test is used at an analysis.
 \item  Average.HR: Expected HR
 \item  Average_HR.KP: Expected HR using KP method
 }
