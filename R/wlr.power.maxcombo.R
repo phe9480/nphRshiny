@@ -64,6 +64,8 @@
 #'                  The sum of all incremental powers is the overall power.
 #'  \item  bd:    Expected rejection boundary in z value
 #'  \item  p:     Expected rejection boundary in p value
+#'  \item  CV.HR.H0 Critical value in HR for variance estimated under H0. Available only when logrank test is used at an analysis.
+#'  \item  CV.HR.H1 Critical value in HR for variance estimated using cov.method.  Available only when logrank test is used at an analysis.
 #'  \item  Average.HR: Expected HR
 #'  \item  Average_HR.KP: Expected HR using KP method
 #'  }
@@ -435,20 +437,21 @@ wlr.power.maxcombo = function(n = 600, r = 1, DCO = c(24, 36),
   medians = c(m0, m1)
   
   #######Critical Values (Outside the scope of the manuscript)######
-  CV.HR.H0 = CV.HR.H1 = rep(NULL, K)
-  if (sum(J) == K){
-    lr0 = 0
-    for (i in 1:K){for (j in 1:J[i]){lr0 = f.ws[[i]][[j]](rnorm(1)) + lr0}}
-    if (lr0 == K){
-      #logrank test in all analyses
-      for (i in 1:K){
-        CV.HR.H0[i] = exp(-bd[i]/sqrt(Lambda(DCO[i])*r0*r1*targetEvents[i]))
-        r0.H1 = targetEvents0[i] / targetEvents[i]
-        r1.H1 = 1 - r0.H1
-        CV.HR.H1[i] = exp(-bd[i]/sqrt(Lambda(DCO[i])*r0*r1*targetEvents[i]))
-      }
-    }
+  CV.HR.H0 = CV.HR.H1 = rep(NA, K)
+
+  #check whether each analysis is logrank.
+  lr0 = rep(0, K)
+  for (i in 1:K){for (j in 1:J[i]){lr0[i] = f.ws[[i]][[j]](rnorm(1)) + lr0[i]}}
+  
+  for (i in 1:K){
+    if (lr0[i] == 1){
+    CV.HR.H0[i] = exp(-bd[i]/sqrt(Lambda(DCO[i])*r0*r1*targetEvents[i]))
+    r0.H1 = targetEvents0[i] / targetEvents[i]
+    r1.H1 = 1 - r0.H1
+    CV.HR.H1[i] = exp(-bd[i]/sqrt(Lambda(DCO[i])*r0*r1*targetEvents[i]))
+    } 
   }
+  
   
   #Expected HR using Cox regression
   G = function(t){(G0(t)+G1(t))/2}
@@ -494,4 +497,3 @@ wlr.power.maxcombo = function(n = 600, r = 1, DCO = c(24, 36),
   
   return(o)
 }
-
