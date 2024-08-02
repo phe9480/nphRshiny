@@ -9,6 +9,7 @@ simulation.mcr(
   N = 600,
   A = 18,
   w = 1.5,
+  Lambda = NULL,
   r = 1,
   p = c(0.1, 0.1),
   alpha = c(log(2)/12, log(2)/12),
@@ -33,6 +34,8 @@ simulation.mcr(
 cumulative enrollment at month t is (t / A)^w, eg,
 at month 6, the enrollment is N*(6/24)^2 = N/16 for
 24 months planned accrual period.}
+
+\item{Lambda}{Cumulative distribution function (CDF) for enrollment on (0, infinity). For example, uniform enrollment of 20 patients / month for 24 months has Lambda = function(t){t/24*as.numeric(t<= 24) + as.numeric(t>24)}.}
 
 \item{r}{Randomization ratio \code{r:1}, where r refers to the experimental arm,
 eg, \code{r=2} in 2:1 ratio}
@@ -111,6 +114,12 @@ set.seed(2022)
 #(6) Delayed effect 6 months, proportional hazards HR = 0.6
 set.seed(2022)
 data = simulation.mcr(nSim=10, N = 600, A = 18, w=1.5, r=1, p=c(0.1,0.1), 
+alpha = c(log(2)/12,log(2)/12), beta=c(1,1), gamma=c(1,1), 
+lambda=c(0,0), tau=c(0,6), psi=c(1,0.6), drop=c(0,0),
+targetEvents = c(300, 420), DCO = NULL) 
+
+#same as above  
+data = simulation.mcr(nSim=10, N = 600, Lambda= function(t){(t/18)^1.5*as.numeric(t<= 18) + as.numeric(t>18)}, r=1, p=c(0.1,0.1), 
 alpha = c(log(2)/12,log(2)/12), beta=c(1,1), gamma=c(1,1), 
 lambda=c(0,0), tau=c(0,6), psi=c(1,0.6), drop=c(0,0),
 targetEvents = c(300, 420), DCO = NULL) 

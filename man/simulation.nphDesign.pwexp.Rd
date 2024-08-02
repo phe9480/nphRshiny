@@ -9,6 +9,7 @@ simulation.nphDesign.pwexp(
   N = 672,
   A = 21,
   w = 1.5,
+  Lambda = NULL,
   r = 1,
   lambda0 = log(2)/11.7,
   lambda1 = log(2)/11.7 * 0.745,
@@ -38,6 +39,8 @@ simulation.nphDesign.pwexp(
 \item{w}{Weight parameter in cumulative enrollment pattern.
 The cumulative enrollment at month t is (t / A)^w, eg, at month 6,
 the enrollment is N*(6/24)^2 = N/16 for 24 months planned accrual period.}
+
+\item{Lambda}{Cumulative distribution function (CDF) for enrollment on (0, infinity). For example, uniform enrollment of 20 patients / month for 24 months has Lambda = function(t){t/24*as.numeric(t<= 24) + as.numeric(t>24)}.}
 
 \item{r}{Randomization ratio r:1, where r refers to the experimental arm, eg, r=2 in 2:1 ratio}
 
