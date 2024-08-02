@@ -18,11 +18,12 @@
 #' @param  w Weight parameter in cumulative enrollment pattern. 
 #' The cumulative enrollment at month t is (t / A)^w, eg, at month 6, 
 #'   the enrollment is N*(6/24)^2 = N/16 for 24 months planned accrual period.
+#' @param Lambda Cumulative distribution function (CDF) for enrollment on (0, infinity). For example, uniform enrollment of 20 patients / month for 24 months has Lambda = function(t){t/24*as.numeric(t<= 24) + as.numeric(t>24)}.   
 #' @param  r Randomization ratio r:1, where r refers to the experimental arm, eg, r=2 in 2:1 ratio
-#' @param  lambda0 Hazard rates for control arm of intervals defined by cuts; for exponential(lam0) distribution,
-#'         lambda0 = log(2) / median;
-#' @param  lambda1 Hazard rates for experimental arm for intervals; for exponential(lam1) distribution,
-#'         lambda1 = log(2) / median; For delayed effect under H1, lam1 is a vector (below).
+#' @param  lam0 Hazard rates for control arm of intervals defined by cuts; for exponential(lam0) distribution,
+#'         lam0 = log(2) / median;
+#' @param  lam1 Hazard rates for experimental arm for intervals; for exponential(lam1) distribution,
+#'         lam1 = log(2) / median; For delayed effect under H1, lam1 is a vector (below).
 #' @param  cuts Timepoints to form intervals for piecewise exponential distribution. For example,
 #   \itemize{
 #   \item Proportional hazards with hr = 0.65. Then lam0 = log(2)/m0, lam1 = log(2)/m0*hr, cuts = NULL. 
@@ -36,17 +37,14 @@
 #'       lam1 = c(log(2)/m0, log(2)/m0*hr, log(2)/m0*hr), and
 #'       cuts = c(6, 24), which forms 3 intervals (0, 6), (6, 24), (24, infinity)
 #       }
-#' @param dropOff0 Drop Off rate per month, eg, 3% every year for control arm, then drop0=0.03/12
-#' @param dropOff1 Drop Off rate per month, eg, 1%, for experimental arm
+#' @param drop0 Drop Off rate per month, eg, 3% every year for control arm, then drop0=0.03/12
+#' @param drop1 Drop Off rate per month, eg, 1%, for experimental arm
 #' @param targetEvents A vector of target events is used to determine DCOs. For example, 
 #'              397 target events are used to determine IA DCO; and 496 events are used 
 #'              to determine the FA cutoff.
 #' @param DCO   A vector of data cut-off time in months, calculated from first subject in. 
 #'              Default NULL. The date cut-off times will be determined by targetEvents.
 #'              If provided, then the targetEvents will be ignored.
-#'              
-#' @param seed seed for random sampling              
-#' 
 #' @return An object with a dataframe for each analysis including the following variables:
 #' \describe{
 #' \item{sim}{sequence number of simulated dataset;}
@@ -65,18 +63,20 @@
 #' #HR = 0.65, enrollment 24 months, weight 1.5, no drop offs; 
 #' #IA and FA are performed at 400 and 500 events respectively.
 #' 
-#' sim.ph = simulation.pwexp(nSim=10, N = 600, A = 24, w=1.5, r=1, lambda0=log(2)/12, lambda1= log(2)/12*0.65, cuts=NULL, targetEvents = c(400, 500))
+#' sim.ph = simulation.pwexp(nSim=10, N = 600, A = 24, w=1.5, r=1, lam0=log(2)/12, lam1= log(2)/12*0.65, cuts=NULL, drop0= 0, drop1= 0, targetEvents = c(400, 500))
+#' #same as above
+#' sim.ph = simulation.pwexp(nSim=10, N = 600, Lambda= function(t){(t/24)^1.5*as.numeric(t<= 24) + as.numeric(t>24)}, r=1, lam0=log(2)/12, lam1= log(2)/12*0.65, cuts=NULL, drop0= 0, drop1= 0, targetEvents = c(400, 500))
 #' km.IA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data=sim.ph[[1]][sim==1,])
-#' plot(km.IA,xlab="Month Since Randomization",ylab="Survival",lty=1:2,xlim=c(0,36))
+#' plot(km.IA,xlab="Month Since Randomization",ylab="Survival",lty=1:2,xlim=c(0,50))
 #' km.FA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data=sim.ph[[2]][sim==1,])
-#' plot(km.FA,xlab="Month Since Randomization",ylab="Survival",lty=1:2,xlim=c(0,36))
+#' plot(km.FA,xlab="Month Since Randomization",ylab="Survival",lty=1:2,xlim=c(0,50))
 #' 
 #' #Example (2): Simulate 10 samples with delayed effect at month 6;
 #' #Total 600 pts, 1:1 randomization, control median OS 12 mo; 
 #' #HR = 0.65, enrollment 24 months, weight 1.5, no drop offs; 
 #' #IA and FA are performed at 400 and 500 events respectively.
 #' 
-#' sim.delay6 = simulation.pwexp(nSim=10, N = 600, A = 24, w=1.5, r=1, lambda0=log(2)/12, lambda1= c(log(2)/12,log(2)/12*0.65), cuts=6, targetEvents = c(400, 500))
+#' sim.delay6 = simulation.pwexp(nSim=10, N = 600, A = 24, w=1.5, r=1, lam0=log(2)/12, lam1= c(log(2)/12,log(2)/12*0.65), cuts=6, drop0= 0, drop1= 0, targetEvents = c(400, 500))
 #' km.IA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data=sim.delay6[[1]][sim==1,])
 #' plot(km.IA,xlab="Month Since Randomization",ylab="Survival",lty=1:2,xlim=c(0,36))
 #' km.FA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data= sim.delay6[[2]][sim==1,])
@@ -90,17 +90,17 @@
 #' #IA and FA are performed at 400 and 500 events respectively.
 #' 
 #' crossEffect = 0.8 #Hazard ratio in control arm (after crossover vs before crossover)
-#' lambda0 = log(2)/12*c(1, 1, crossEffect); lambda1 = log(2)/12*c(1, hr, hr)
-#' sim.delay6crs=simulation.pwexp(nSim=10,N=600,A=24,w=1.5,r=1,lambda0=lambda0, lambda1=lambda1,cuts=c(6, 24),targetEvents=c(400, 500))
+#' lam0 = log(2)/12*c(1, 1, crossEffect); lam1 = log(2)/12*c(1, hr, hr)
+#' sim.delay6crs=simulation.pwexp(nSim=10,N=600,A=24,w=1.5,r=1,lam0=lam0, lam1=lam1,cuts=c(6, 24),drop0=0,drop1=0, targetEvents=c(400, 500))
 #' km.IA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data=sim.delay6crs[[1]][sim==1,])
 #' plot(km.IA,xlab="Month Since Randomization",ylab="Survival",lty=1:2,xlim=c(0,36))
 #' km.FA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data= sim.delay6crs[[2]][sim==1,])
 #' plot(km.FA,xlab="Month Since Randomization",ylab="Survival",lty=1:2,xlim=c(0,36))
 #' 
 #' @export 
-simulation.pwexp = function(nSim=100, N = 600, A = 21, w=1.5, r=1, lambda0=log(2)/12, lambda1=log(2)/12*0.65, cuts=NULL, dropOff0=0, dropOff1=0, targetEvents = c(400, 500), DCO = NULL, seed=2000) {
+simulation.pwexp = function(nSim=100, N = 600, A = 21, w=1.5, Lambda = NULL, r=1, lam0=log(2)/12, lam1=log(2)/12*0.65, cuts=NULL, drop0=0, drop1=0, targetEvents = c(400, 500), DCO = NULL) {
 
-  f.nEachMonth = function (N=600, A=24, w=2, r=2) {
+  f.nEachMonth = function (N=600, A=24, w=2, r=2, Lambda=NULL) {
     
     N1 = N * (r/(r+1))
     N0 = N - N1
@@ -118,7 +118,11 @@ simulation.pwexp = function(nSim=100, N = 600, A = 21, w=1.5, r=1, lambda0=log(2
     cLastN0 = 0
     for (i in 1:A) {
       #ith month: cumulative #pts
-      cN0i = max(round((i/A)^w * N0), 1)
+      if (is.null(Lambda)){
+        cN0i = max(round((i/A)^w * N0), 1)
+      } else {
+        cN0i = max(round(Lambda(i/A) * N0), 1)
+      }
       
       n0[i] = max(cN0i - cLastN0, 1)
       if (i == A) {n0[i] = N0 - sum(n0[1:(A-1)]) }
@@ -153,16 +157,13 @@ simulation.pwexp = function(nSim=100, N = 600, A = 21, w=1.5, r=1, lambda0=log(2
     return(data0)
   }
   
-  nEachMonth = f.nEachMonth(N=N, A=A, w=w, r=r)
+  nEachMonth = f.nEachMonth(N=N, A=A, w=w, r=r, Lambda=Lambda)
   
   gamma = nEachMonth$n0 + nEachMonth$n1
+  eta0 = -log(1-drop0)
+  eta1 = -log(1-drop1)
   
-  eta0 = -log(1-dropOff0) #dropOff0: unit dropoff rate in control; 
-  eta1 = -log(1-dropOff1)
-  #From nphsim documentation: eta <- -log(0.99) ## 1% monthly dropout rate
-  
-  set.seed(seed)
-  o = nphsim::nphsim(nsim=nSim,lambdaC=lambda0,lambdaE=lambda1, ssC=N/(r+1), ssE=N*r/(r+1),
+  o = nphsim::nphsim(nsim=nSim,lambdaC=lam0,lambdaE=lam1, ssC=N/(r+1), ssE=N*r/(r+1),
              intervals=cuts, gamma=gamma, R=rep(1, A),eta=eta0, etaE=eta1,fixEnrollTime = FALSE)
   dat = o$simd
   data.out = NULL
@@ -179,7 +180,7 @@ simulation.pwexp = function(nSim=100, N = 600, A = 21, w=1.5, r=1, lambda0=log(2
     
     #rename variables
     dataj <- dplyr::rename(dataj, enterTime = enterT, calendarTime = ct, survTime= survival)
-    dataj$group = as.numeric(dataj$treatment == "experimental")
+    dataj$group = ifelse(dataj$treatment == "control", 0, 1)
     
     #cut data according to the specified target events    
     dataj.cut <- lapply(1:L, function(k) {
