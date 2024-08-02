@@ -118,7 +118,7 @@
 #' 
 #' @export
 #' 
-rmcr = function(n=1, p=0.3, alpha = log(2)/12, beta=1, gamma=1, lambda=0, tau=0, psi=1) {
+rmcr = function(n=1, p=0.1, alpha = log(2)/12, beta=1, gamma=1, lambda=0, tau=0, psi=1) {
   
   S0 = function(t){1-(1-exp(-alpha*t^gamma*exp(lambda*t)))^beta}
   S  = function(t){p + (1-p)*S0(t)}

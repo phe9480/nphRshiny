@@ -39,6 +39,7 @@
 #'           cumulative enrollment at month t is (t / A)^w, eg, 
 #'           at month 6, the enrollment is N*(6/24)^2 = N/16 for 
 #'           24 months planned accrual period.
+#' @param Lambda Cumulative distribution function (CDF) for enrollment on (0, infinity). For example, uniform enrollment of 20 patients / month for 24 months has Lambda = function(t){t/24*as.numeric(t<= 24) + as.numeric(t>24)}.   
 #' @param  r Randomization ratio `r:1`, where r refers to the experimental arm, 
 #' eg, `r=2` in 2:1 ratio
 #' @param  p Cure rate parameter. When p = 0, it reduces to `GMW(alpha, beta, gamma, lambda)` 
@@ -77,6 +78,12 @@
 #' lambda=c(0,0), tau=c(0,6), psi=c(1,0.6), drop=c(0,0),
 #' targetEvents = c(300, 420), DCO = NULL) 
 #' 
+#' #same as above  
+#' data = simulation.mcr(nSim=10, N = 600, Lambda= function(t){(t/18)^1.5*as.numeric(t<= 18) + as.numeric(t>18)}, r=1, p=c(0.1,0.1), 
+#' alpha = c(log(2)/12,log(2)/12), beta=c(1,1), gamma=c(1,1), 
+#' lambda=c(0,0), tau=c(0,6), psi=c(1,0.6), drop=c(0,0),
+#' targetEvents = c(300, 420), DCO = NULL) 
+#' 
 #' data.IA = data[[1]][data[[1]]$sim==1,]
 #' data.FA = data[[2]][data[[2]]$sim==1,]
 #' m0 = qmcr(0.5, p=0.1, alpha = log(2)/12, beta=1, gamma=1, lambda=0, tau=0, psi=1)
@@ -94,7 +101,7 @@
 #' 
 #' @export
 #' 
-simulation.mcr = function(nSim=100, N = 600, A = 18, w=1.5, r=1, p=c(0.1,0.1), 
+simulation.mcr = function(nSim=100, N = 600, A = 18, w=1.5, Lambda=NULL, r=1, p=c(0.1,0.1), 
                   alpha = c(log(2)/12,log(2)/12), beta=c(1,1), gamma=c(1,1), 
                   lambda=c(0,0), tau=c(0,0), psi=c(1,1), drop=c(0,0),
                   targetEvents = c(300, 420), DCO = NULL) {
@@ -109,21 +116,30 @@ simulation.mcr = function(nSim=100, N = 600, A = 18, w=1.5, r=1, p=c(0.1,0.1),
   ###########################
   #Recruitment data utility
   ###########################
-  f.nEachMonth = function (N=600, A=18, w=1.5, r=1){
-    #f.nEachMonth(N=600, A=18, w=1.5, r=1)
-    N1 = N * (r/(r+1)); N0 = N - N1
-    #When r > 1, the control arm has smaller number of pts.
-    #Just need to determine enrollment for control arm per month,
+  f.nEachMonth = function (N=600, A=24, w=2, r=2, Lambda=NULL) {
+    
+    N1 = N * (r/(r+1))
+    N0 = N - N1
+    
+    #When r > 1, the control arm has smaller number of pts. 
+    #Just need to determine enrollment for control arm per month, 
     #then to obtain enrollment for experimental arm by n1i = n0i * r.
+    
     n1 = n0 = rep(NA, A) #enrollment by month
     randdt1 = rep(NA, N1) #randomization date
     randdt0 = rep(NA, N0)
+    
     #Determine number of pts per month for control arm
     #(i-1)th month cumulative enrolled pts
     cLastN0 = 0
     for (i in 1:A) {
       #ith month: cumulative #pts
-      cN0i = max(round((i/A)^w * N0), 1)
+      if (is.null(Lambda)){
+        cN0i = max(round((i/A)^w * N0), 1)
+      } else {
+        cN0i = max(round(Lambda(i/A) * N0), 1)
+      }
+      
       n0[i] = max(cN0i - cLastN0, 1)
       if (i == A) {n0[i] = N0 - sum(n0[1:(A-1)]) }
       cLastN0 = cN0i  
@@ -135,10 +151,11 @@ simulation.mcr = function(nSim=100, N = 600, A = 18, w=1.5, r=1, p=c(0.1,0.1),
     if(n1[A] == 0 && n1[A-1] > 1){n1[A-1] = n1[A-1]-1; n1[A]=1}
     
     o = list()
-    o$n0 = n0; o$n1 = n1
+    o$n0 = n0
+    o$n1 = n1
     return(o)
   }
-  ###########################
+###########################
   #Data cut utility
   ###########################
   f.dataCut = function(data, targetEvents = 397, DCO = NULL) {
@@ -162,9 +179,9 @@ simulation.mcr = function(nSim=100, N = 600, A = 18, w=1.5, r=1, p=c(0.1,0.1),
   out = list(NULL)
   if (L > 1){for (k in 2:L){out = c(out, list(NULL))}}
   
+  nEachMonth = f.nEachMonth(N=N, A=A, w=w, r=r, Lambda=Lambda)
+  n0 = sum(nEachMonth$n0); n1 = sum(nEachMonth$n1)
   for (i in 1:nSim){
-    nEachMonth = f.nEachMonth(N=N, A=A, w=w, r=r)
-    n0 = sum(nEachMonth$n0); n1 = sum(nEachMonth$n1)
     
     ########################
     #MCR data for each arm
@@ -238,5 +255,6 @@ simulation.mcr = function(nSim=100, N = 600, A = 18, w=1.5, r=1, p=c(0.1,0.1),
       out[[ii]] = rbind(out[[ii]], dati.cut[[ii]])
     }
   }
+  
   return(out)
 }

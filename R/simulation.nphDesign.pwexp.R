@@ -20,6 +20,7 @@
 #' @param  w Weight parameter in cumulative enrollment pattern. 
 #' The cumulative enrollment at month t is (t / A)^w, eg, at month 6, 
 #'   the enrollment is N*(6/24)^2 = N/16 for 24 months planned accrual period.
+#' @param Lambda Cumulative distribution function (CDF) for enrollment on (0, infinity). For example, uniform enrollment of 20 patients / month for 24 months has Lambda = function(t){t/24*as.numeric(t<= 24) + as.numeric(t>24)}.   
 #' @param  r Randomization ratio r:1, where r refers to the experimental arm, eg, r=2 in 2:1 ratio
 #' @param  lambda0 Hazard rates for control arm of intervals defined by cuts; for exponential(lambda0) distribution,
 #'         lambda0 = log(2) / median;
@@ -146,7 +147,7 @@
 #' logrank="Y", fws=fws5)
 #' 
 #' @export 
-simulation.nphDesign.pwexp = function(nSim=10000, N = 672, A = 21, w=1.5, r=1, lambda0=log(2)/11.7, lambda1=log(2)/11.7*0.745, 
+simulation.nphDesign.pwexp = function(nSim=10000, N = 672, A = 21, w=1.5, Lambda=NULL, r=1, lambda0=log(2)/11.7, lambda1=log(2)/11.7*0.745, 
     cuts=NULL, dropOff0=0, dropOff1=0, targetEvents = c(290, 397, 496), 
     sf = "LDOF", param = -3, overall.alpha = 0.025, alpha = NULL,
     logrank="N", fws.options=NULL, H0 = "N", parallel=TRUE, n.cores=8, seed=2022) {
@@ -194,7 +195,7 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 672, A = 21, w=1.5, r=1, l
     
     for (i in 1:nSim) {
       #(1). Generate data
-      dati = simulation.pwexp(nSim=1, N = N, A = A, w=w, r=r, lambda0=lambda0, lambda1=lambda1, 
+      dati = simulation.pwexp(nSim=1, N = N, A = A, w=w, Lambda=Lambda, r=r, lambda0=lambda0, lambda1=lambda1, 
                        cuts=cuts, dropOff0=dropOff0, dropOff1=dropOff1, targetEvents = targetEvents)
  
       sim.data[[i]]<-dati
@@ -217,7 +218,7 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 672, A = 21, w=1.5, r=1, l
   }else{
     for (i in 1:nSim) {
       #(1). Generate data
-      dati = simulation.pwexp(nSim=1, N = N, A = A, w=w, r=r, lambda0=lambda0, lambda1=lambda1, 
+      dati = simulation.pwexp(nSim=1, N = N, A = A, w=w, Lambda=Lambda, r=r, lambda0=lambda0, lambda1=lambda1, 
                        cuts=cuts, dropOff0=dropOff0, dropOff1=dropOff1, targetEvents = targetEvents)
       
       #(3). Testing strategy m
