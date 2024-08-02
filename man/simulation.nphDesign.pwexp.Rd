@@ -6,27 +6,28 @@
 \usage{
 simulation.nphDesign.pwexp(
   nSim = 10000,
-  N = 672,
+  N = 100,
   A = 21,
   w = 1.5,
   Lambda = NULL,
   r = 1,
-  lambda0 = log(2)/11.7,
-  lambda1 = log(2)/11.7 * 0.745,
+  lam0 = log(2)/12,
+  lam1 = log(2)/12 * 0.7,
   cuts = NULL,
-  dropOff0 = 0,
-  dropOff1 = 0,
-  targetEvents = c(290, 397, 496),
+  drop0 = 0,
+  drop1 = 0,
+  targetEvents = c(30, 60),
   sf = "LDOF",
-  param = -3,
+  param = NULL,
   overall.alpha = 0.025,
   alpha = NULL,
   logrank = "N",
-  fws.options = NULL,
+  fws.options = list(fws5),
   H0 = "N",
-  parallel = TRUE,
+  parallel = FALSE,
   n.cores = 8,
-  seed = 2022
+  seed = 2022,
+  out.z = FALSE
 )
 }
 \arguments{
@@ -44,12 +45,6 @@ the enrollment is N*(6/24)^2 = N/16 for 24 months planned accrual period.}
 
 \item{r}{Randomization ratio r:1, where r refers to the experimental arm, eg, r=2 in 2:1 ratio}
 
-\item{lambda0}{Hazard rates for control arm of intervals defined by cuts; for exponential(lambda0) distribution,
-lambda0 = log(2) / median;}
-
-\item{lambda1}{Hazard rates for experimental arm for intervals; for exponential(lambda1) distribution,
-lambda1 = log(2) / median; For delayed effect under H1, lambda1 is a vector (below).}
-
 \item{cuts}{Timepoints to form intervals for piecewise exponential distribution. For example,
 experimental arm has hr = 0.6 after delay, then cuts = 6, and
 lamda0 = log(2) / m0 or lambda0 = rep(log(2) / m0, 2),
@@ -58,10 +53,6 @@ treatment after 24 mo, so its hazard decreases 20\%. Then,
 lambda0 = c(log(2)/m0, log(2)/m0, log(2)/m0}0.8),
 lambda1 = c(log(2)/m0, log(2)/m0\emph{hr, log(2)/m0}hr), and
 cuts = c(6, 24), which forms 3 intervals (0, 6), (6, 24), (24, infinity)}
-
-\item{dropOff0}{Drop Off rate per month, eg, 1\%, for control arm}
-
-\item{dropOff1}{Drop Off rate per month, eg, 1\%, for experimental arm}
 
 \item{targetEvents}{A vector of target events is used to determine DCOs. For example,
 397 target events are used to determine IA DCO; and 496 events are used
@@ -116,6 +107,18 @@ where s is the survival rate S(t-).
 \item{n.cores}{This will be used if parallelization is TRUE. Default is 8.}
 
 \item{seed}{seed for generating samples. Default 2022}
+
+\item{out.z}{Output test statistics, TRUE/FALSE}
+
+\item{lambda0}{Hazard rates for control arm of intervals defined by cuts; for exponential(lambda0) distribution,
+lambda0 = log(2) / median;}
+
+\item{lambda1}{Hazard rates for experimental arm for intervals; for exponential(lambda1) distribution,
+lambda1 = log(2) / median; For delayed effect under H1, lambda1 is a vector (below).}
+
+\item{dropOff0}{Drop Off rate per month, eg, 1\%, for control arm}
+
+\item{dropOff1}{Drop Off rate per month, eg, 1\%, for experimental arm}
 }
 \value{
 An object with a dataframe for each analysis including the following variables:
@@ -159,12 +162,11 @@ fws3 = list(IA1 = list(fh01), FA = list(fh01))
 fws4 = list(IA1 = list(lr), FA = list(lr, fh01))
 fws5 = list(IA1 = list(lr), FA = list(lr, fh01, fh11))
 fws6 = list(IA1 = list(lr, fh01), FA = list(lr, fh01))
-fws7 = list(IA1 = list(sfh01), FA = list(lr, fh01))
 
 #7 weighting strategies for exploration 
-fws = list(fws1, fws2, fws3, fws4, fws5, fws6, fws7)
+fws = list(fws1, fws2, fws3, fws4, fws5, fws6)
 
-alpha = f.alpha(overall.alpha=0.025, side = 1, sf="LDOF", targetEvents=c(60, 80))
+alpha = f.alpha(overall.alpha=0.025, sf="LDOF", timing=c(0.7, 1))
 m0 = 11.7
 lambda0 = log(2) / m0
 h0 = function(t){lambda0}; 
@@ -189,9 +191,11 @@ wlr.power.maxcombo(T = NULL, events = c(60, 80), alpha=alpha,
   f.ws = fws2, F.entry=F.entry, G.ltfu=G.ltfu)
   
 #Simulations for exploring 7 weighting strategies
-H0 = simulate.nphDesign(nSim=5, N = 100, A = 21, w=1.5, r=1, lambda0=log(2)/11.7, lambda1=log(2)/11.7*0.745,
-cuts=NULL, targetEvents = c(60, 80), 
-sf = "LDOF", overall.alpha = 0.025, side = 1, alpha = NULL,
-logrank="Y", fws=fws5)
+H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, A = 21, w=1.5, r=1, lambda0=log(2)/11.7, lambda1=log(2)/11.7*0.745,
+targetEvents = c(60, 80), sf = "LDOF", overall.alpha = 0.025, logrank="Y", fws=fws5)
+
+#same as above
+H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, Lambda=F.entry, r=1, lam0=log(2)/11.7, lam1=log(2)/11.7*0.745,
+targetEvents = c(60, 80), sf = "LDOF", overall.alpha = 0.025, logrank="Y", fws.options=list(fws5))
 
 }
