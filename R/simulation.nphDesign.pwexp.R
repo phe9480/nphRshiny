@@ -84,6 +84,7 @@
 #' @param parallel True/False indicator. If true, use parallel computing weighted log-rank test for each analysis in strategy m
 #' @param n.cores This will be used if parallelization is TRUE. Default is 8.
 #' @param seed seed for generating samples. Default 2022
+#' @param out.z Output test statistics, TRUE/FALSE
 #'                  
 #' @return An object with a dataframe for each analysis including the following variables:
 #' \describe{
@@ -111,12 +112,11 @@
 #' fws4 = list(IA1 = list(lr), FA = list(lr, fh01))
 #' fws5 = list(IA1 = list(lr), FA = list(lr, fh01, fh11))
 #' fws6 = list(IA1 = list(lr, fh01), FA = list(lr, fh01))
-#' fws7 = list(IA1 = list(sfh01), FA = list(lr, fh01))
 #' 
 #' #7 weighting strategies for exploration 
-#' fws = list(fws1, fws2, fws3, fws4, fws5, fws6, fws7)
+#' fws = list(fws1, fws2, fws3, fws4, fws5, fws6)
 #' 
-#' alpha = f.alpha(overall.alpha=0.025, side = 1, sf="LDOF", targetEvents=c(60, 80))
+#' alpha = f.alpha(overall.alpha=0.025, sf="LDOF", timing=c(0.7, 1))
 #' m0 = 11.7
 #' lambda0 = log(2) / m0
 #' h0 = function(t){lambda0}; 
@@ -141,21 +141,23 @@
 #'   f.ws = fws2, F.entry=F.entry, G.ltfu=G.ltfu)
 #'   
 #' #Simulations for exploring 7 weighting strategies
-#' H0 = simulate.nphDesign(nSim=5, N = 100, A = 21, w=1.5, r=1, lambda0=log(2)/11.7, lambda1=log(2)/11.7*0.745,
-#' cuts=NULL, targetEvents = c(60, 80), 
-#' sf = "LDOF", overall.alpha = 0.025, side = 1, alpha = NULL,
-#' logrank="Y", fws=fws5)
+#' H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, A = 21, w=1.5, r=1, lambda0=log(2)/11.7, lambda1=log(2)/11.7*0.745,
+#' targetEvents = c(60, 80), sf = "LDOF", overall.alpha = 0.025, logrank="Y", fws=fws5)
+#' 
+#' #same as above
+#' H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, Lambda=F.entry, r=1, lam0=log(2)/11.7, lam1=log(2)/11.7*0.745,
+#' targetEvents = c(60, 80), sf = "LDOF", overall.alpha = 0.025, logrank="Y", fws.options=list(fws5))
 #' 
 #' @export 
-simulation.nphDesign.pwexp = function(nSim=10000, N = 672, A = 21, w=1.5, Lambda=NULL, r=1, lambda0=log(2)/11.7, lambda1=log(2)/11.7*0.745, 
-    cuts=NULL, dropOff0=0, dropOff1=0, targetEvents = c(290, 397, 496), 
-    sf = "LDOF", param = -3, overall.alpha = 0.025, alpha = NULL,
-    logrank="N", fws.options=NULL, H0 = "N", parallel=TRUE, n.cores=8, seed=2022) {
+simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda=NULL, r=1, lam0=log(2)/12, lam1=log(2)/12*0.7, 
+    cuts=NULL, drop0=0, drop1=0, targetEvents = c(30, 60), 
+    sf = "LDOF", param = NULL, overall.alpha = 0.025, alpha = NULL,
+    logrank="N", fws.options=list(fws5), H0 = "N", parallel=FALSE, n.cores=8, seed=2022, out.z = FALSE) {
 
     set.seed(seed)
     side = 1 #always one-sided
   #Simulation for checking type I error
-  if (H0 == "Y"){lambda1 = lambda0} 
+  if (H0 == "Y"){lam1 = lam0} 
   
   ##############################
   #M Options of test strategies
@@ -195,8 +197,8 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 672, A = 21, w=1.5, Lambda
     
     for (i in 1:nSim) {
       #(1). Generate data
-      dati = simulation.pwexp(nSim=1, N = N, A = A, w=w, Lambda=Lambda, r=r, lambda0=lambda0, lambda1=lambda1, 
-                       cuts=cuts, dropOff0=dropOff0, dropOff1=dropOff1, targetEvents = targetEvents)
+      dati = simulation.pwexp(nSim=1, N = N, A = A, w=w, Lambda=Lambda, r=r, lam0=lam0, lam1=lam1, 
+                       cuts=cuts, drop0=drop0, drop1=drop1, targetEvents = targetEvents)
  
       sim.data[[i]]<-dati
     }
@@ -218,8 +220,9 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 672, A = 21, w=1.5, Lambda
   }else{
     for (i in 1:nSim) {
       #(1). Generate data
-      dati = simulation.pwexp(nSim=1, N = N, A = A, w=w, Lambda=Lambda, r=r, lambda0=lambda0, lambda1=lambda1, 
-                       cuts=cuts, dropOff0=dropOff0, dropOff1=dropOff1, targetEvents = targetEvents)
+      dati = simulation.pwexp(nSim=1, N = N, A = A, w=w, Lambda=Lambda, r=r, 
+                              lam0=lam0, lam1=lam1, 
+                       cuts=cuts, drop0=drop0, drop1=drop1, targetEvents = targetEvents)
       
       #(3). Testing strategy m
       for (m in 1:M){    
@@ -276,7 +279,8 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 672, A = 21, w=1.5, Lambda
   
   o=list()
   o$power = pow; o$overall.power = overall.pow
-  o$wlr.simulations = wlr.sim
+  if (out.z) {o$wlr.simulations = wlr.sim}
+  
   if(logrank=="Y"){
     lr.pow = rep(NA, K)
     for (j in 1:K) {lr.pow[j] = sum(lr.sim[,j,5])/nSim}
@@ -287,8 +291,9 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 672, A = 21, w=1.5, Lambda
     
     o$lr.overall.power = lr.overall.pow
     o$lr.power = lr.pow
-    o$lr.simulations = lr.sim
+    if (out.z) {o$lr.simulations = lr.sim}
   }
   return(o)
 }
+
 

@@ -244,7 +244,9 @@ simulation.mcr = function(nSim=100, N = 600, A = 18, w=1.5, Lambda=NULL, r=1, p=
     calendarTime = as.numeric(enterTime) + as.numeric(survTime)
     cnsr = c(1-event0, 1-event1)
     
-    dati = data.frame(cbind(sim,treatment, enterTime, calendarTime, survTime, cnsr))
+    dati = data.frame(cbind(sim, enterTime, calendarTime, survTime, cnsr))
+    dati$treatment = treatment
+    dati$group = ifelse(dati$treatment == "control", 0, 1)
     
     ############################
     #Cut data

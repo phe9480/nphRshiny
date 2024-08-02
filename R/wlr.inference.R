@@ -197,7 +197,7 @@ wlr.inference = function(data=list(IA1=data1, IA2=data2, FA=data3),
           if(incr > 0){
             #information matrix for Zij and Zi'j'
             datai = data[[i]]; dataip = data[[ip]]
-            corr[row, col] = wlr.cov2t(time1=as.numeric(datai$survTimeCut), event1=1-as.numeric(datai$cnsrCut), 
+            corr[row, col] = nphRshiny:::wlr.cov2t(time1=as.numeric(datai$survTimeCut), event1=1-as.numeric(datai$cnsrCut), 
                             time2=as.numeric(dataip$survTimeCut), event2=1-as.numeric(dataip$cnsrCut), 
                             group=datai$group, 
                             strata1=strata1, strata2=strata2, strata3=strata3,
@@ -248,6 +248,7 @@ wlr.inference = function(data=list(IA1=data1, IA2=data2, FA=data3),
         b[i] = uniroot(f=f.b, interval=c(1, 20), tol = 1e-8)$root
     }
   }
+  
   #Calculate p value for each analysis
   test.results = NULL
   for (i in 1:K){
