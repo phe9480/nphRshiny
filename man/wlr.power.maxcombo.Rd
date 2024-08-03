@@ -167,8 +167,12 @@ fh01 = function(s){(1-s)}
 fh11 = function(s){s*(1-s)}
 
 #Enrollment
-Lambda = function(t){(t/18)^1.5*as.numeric(t <= 18) + as.numeric(t > 18)};
-G0 = function(t){0}; G1 = function(t){0}; 
+Lambda = function(t){(t/18)^1.5*as.numeric(t <= 18) + as.numeric(t > 18)}
+
+#Drop-off
+eta0 = -log(1-0.03/12) #control arm monthly drop off rate 0.03/12.
+eta1 = -log(1-0.03/12) #control arm monthly drop off rate 0.03/12.
+G0 = function(t){1-exp(-eta0*t)}; G1 = function(t){1-exp(-eta1*t)}; 
 
 #Schoenfeld method with power based on covariance matrix under H0
 #(a) Directly provide incremental alpha with IA spent 0.005.
