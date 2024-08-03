@@ -43,22 +43,34 @@ simulation.nphDesign.pwexp(
 The cumulative enrollment at month t is (t / A)^w, eg, at month 6,
 the enrollment is N*(6/24)^2 = N/16 for 24 months planned accrual period.}
 
-\item{Lambda}{Cumulative distribution function (CDF) for enrollment on (0, infinity). For example, uniform enrollment of 20 patients / month for 24 months has Lambda = function(t){t/24*as.numeric(t<= 24) + as.numeric(t>24)}.}
+\item{Lambda}{Cumulative distribution function (CDF) for enrollment on (0, infinity).
+For example, uniform enrollment of 20 patients / month for 24 months has
+Lambda = function(t){t/24*as.numeric(t<= 24) + as.numeric(t>24)}. When Lambda is specified, A and w are ignored.}
 
 \item{r}{Randomization ratio r:1, where r refers to the experimental arm, eg, r=2 in 2:1 ratio}
 
+\item{lam0}{Hazard rates for control arm of intervals defined by cuts; for exponential(lambda0) distribution,
+lam0 = log(2) / median;}
+
+\item{lam1}{Hazard rates for experimental arm for intervals; for exponential(lambda1) distribution,
+lam1 = log(2) / median; For delayed effect under H1, lambda1 is a vector (below).}
+
 \item{cuts}{Timepoints to form intervals for piecewise exponential distribution. For example,
 experimental arm has hr = 0.6 after delay, then cuts = 6, and
-lamda0 = log(2) / m0 or lambda0 = rep(log(2) / m0, 2),
-lamda1 = c(log(2)/m0, log(2)/m0\emph{hr).
+lam0 = log(2) / m0 or lam0 = rep(log(2) / m0, 2),
+lam1 = c(log(2)/m0, log(2)/m0\emph{hr).
 treatment after 24 mo, so its hazard decreases 20\%. Then,
-lambda0 = c(log(2)/m0, log(2)/m0, log(2)/m0}0.8),
-lambda1 = c(log(2)/m0, log(2)/m0\emph{hr, log(2)/m0}hr), and
+lam0 = c(log(2)/m0, log(2)/m0, log(2)/m0}0.8),
+lam1 = c(log(2)/m0, log(2)/m0\emph{hr, log(2)/m0}hr), and
 cuts = c(6, 24), which forms 3 intervals (0, 6), (6, 24), (24, infinity)}
 
+\item{drop0}{Drop Off rate per month, eg, 1\%, for control arm}
+
+\item{drop1}{Drop Off rate per month, eg, 1\%, for experimental arm}
+
 \item{targetEvents}{A vector of target events is used to determine DCOs. For example,
-397 target events are used to determine IA DCO; and 496 events are used
-to determine the FA cutoff.}
+100 target events are used to determine IA DCO; and 150 events are used
+to determine the FA DCO. Must be integers.}
 
 \item{sf}{Spending function. LanDeMets O'Brien Fleming: "LDOF", LanDeMets Pocock: "LDPK", "HSD": Hwang-Shih-DeCani spending function with parameter param.}
 
@@ -115,16 +127,6 @@ where s is the survival rate S(t-).
 \item{seed}{seed for generating samples. Default 2022}
 
 \item{out.z}{Output test statistics, TRUE/FALSE}
-
-\item{lambda0}{Hazard rates for control arm of intervals defined by cuts; for exponential(lambda0) distribution,
-lambda0 = log(2) / median;}
-
-\item{lambda1}{Hazard rates for experimental arm for intervals; for exponential(lambda1) distribution,
-lambda1 = log(2) / median; For delayed effect under H1, lambda1 is a vector (below).}
-
-\item{dropOff0}{Drop Off rate per month, eg, 1\%, for control arm}
-
-\item{dropOff1}{Drop Off rate per month, eg, 1\%, for experimental arm}
 }
 \value{
 An object with a dataframe for each analysis including the following variables:
@@ -207,17 +209,24 @@ wlr.power.maxcombo(DCO = c(24, 36), overall.alpha=0.025, sf = "LDOF",
   mu.method = "Schoenfeld", cov.method = "H0")
   
 #(c) Simulations for exploring weighted logrank tests option 1 and 2
-events = rep(NA, 2); DCO=c(24, 36)
-for (i in 1:length(events)){events[i] = fe(DCO = DCO[i], r = 1, h0 = h0, S0 = S0, h1 = h1, S1 = S1, 
+e = rep(NA, 2); DCO=c(24, 36)
+for (i in 1:length(DCO)){e[i] = fe(DCO = DCO[i], r = 1, h0 = h0, S0 = S0, h1 = h1, S1 = S1, 
 Lambda = F.entry, n = 100, G0=G0, G1=G1)$e}
 
-#(c1) Type I error
-H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, A = 21, w=1.5, r=1, lam0=lambda0, lam1=lambda0*0.7,
-drop0 = 0.03/12, drop1=0.03/12,
-targetEvents = events, sf = "LDOF", overall.alpha = 0.025, logrank="Y", fws.options=list(fws1, fws2))
+#(c1) Type I error; also output logrank test simulation results
+H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, r = 1, 
+A = 21, w=1.5,
+lam0=lambda0, lam1=lambda0*0.7,
+targetEvents = e, drop0 = 0.03/12, drop1=0.03/12,
+overall.alpha = 0.025, sf = "LDOF",
+H0 = "Y", logrank="Y", fws.options=list(fws1))
 
-#same as above
-H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, Lambda=F.entry, r=1, lam0=log(2)/11.7, lam1=log(2)/11.7*0.745,
-targetEvents = c(60, 80), sf = "LDOF", overall.alpha = 0.025, logrank="Y", fws.options=list(fws5))
+#same as above; using F.entry function to replac A and w specifications.
+H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, r=1, 
+Lambda=F.entry, 
+lam0=lambda0, lam1=lambda0*0.7,
+targetEvents = e, drop0 = 0.03/12, drop1=0.03/12,
+overall.alpha = 0.025, sf = "LDOF",
+H0 = "Y", logrank="Y", fws.options=list(fws1))
 
 }

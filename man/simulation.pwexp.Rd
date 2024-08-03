@@ -55,8 +55,8 @@ cuts = c(6, 24), which forms 3 intervals (0, 6), (6, 24), (24, infinity)}
 \item{drop1}{Drop Off rate per month, eg, 1\%, for experimental arm}
 
 \item{targetEvents}{A vector of target events is used to determine DCOs. For example,
-397 target events are used to determine IA DCO; and 496 events are used
-to determine the FA cutoff.}
+100 target events are used to determine IA DCO; and 150 events are used
+to determine the FA DCO. Must be integers.}
 
 \item{DCO}{A vector of data cut-off time in months, calculated from first subject in.
 Default NULL. The date cut-off times will be determined by targetEvents.
