@@ -44,9 +44,11 @@
 #' @param targetEvents A vector of target events is used to determine DCOs. For example, 
 #'              397 target events are used to determine IA DCO; and 496 events are used 
 #'              to determine the FA cutoff.
+#' @param  overall.alpha  Allocated overall alpha (one-sided) for group sequential design
 #' @param  sf Spending function. LanDeMets O'Brien Fleming: "LDOF", LanDeMets Pocock: "LDPK", "HSD": Hwang-Shih-DeCani spending function with parameter param.
 #' @param param parameter for Hwang-Shih-DeCani spending function
-#' @param  overall.alpha  Allocated overall alpha (one-sided) for group sequential design
+#' @param p1 A fixed p value boundary for IAs (one-sided), which is applicable to Haybittle-Peto alpha spending only.
+#' @param cum.alpha Cumulative alpha spending by analysis, which is applicable to Bespoke method only. Cum.alpha must have the same length as timing.
 #' @param alpha Allocated one-sided alpha levels. sum(alpha) is the total type I error.
 #'           If alpha spending function a(t) is used for information time c(t1, ..., tK),
 #'           then alpha1 = a(t1), alpha2 = a(t2)-a(t1), ..., alphaK = a(tK)-a(t_{K-1}),
@@ -105,7 +107,8 @@
 #' \item{lr.simulations}{Simulation results for each simulated study data using logrank test}
 #' }
 #' @examples
-#' #Example (1): Simulate 10 samples from proportional hazards scenario. 
+#' 
+#' #Utility functions
 #' fws1 = list(IA1 = list(lr), FA = list(lr))
 #' fws2 = list(IA1 = list(lr), FA = list(fh01))
 #' fws3 = list(IA1 = list(fh01), FA = list(fh01))
@@ -113,36 +116,51 @@
 #' fws5 = list(IA1 = list(lr), FA = list(lr, fh01, fh11))
 #' fws6 = list(IA1 = list(lr, fh01), FA = list(lr, fh01))
 #' 
-#' #7 weighting strategies for exploration 
+#' #Weighted logrank tests options
 #' fws = list(fws1, fws2, fws3, fws4, fws5, fws6)
 #' 
-#' alpha = f.alpha(overall.alpha=0.025, sf="LDOF", timing=c(0.7, 1))
-#' m0 = 11.7
-#' lambda0 = log(2) / m0
+#' #Example (1): Simulate 10 samples from proportional HR
+#' 
+#' #Hazard and survival distributions
+#' 
+#' #Control Arm
+#' m0 = 10; lambda0 = log(2) / m0
 #' h0 = function(t){lambda0}; 
 #' S0 = function(t){exp(-lambda0 * t)}
-#' h1 = function(t){lambda0*0.745}; 
-#' S1 = function(t){exp(-lambda0 *0.745* t)}
 #' 
+#' #Experimental Arm
+#' h1 = function(t){lambda0*0.7}; 
+#' S1 = function(t){exp(-lambda0 *0.7* t)}
+#' 
+#' #Enrollment
 #' F.entry = function(t){(t/21)^1.5*as.numeric(t <= 21) + as.numeric(t > 21)}
-#' G.ltfu = function(t){0}
-#' f.logHR = function(t){log(0.745)}
 #' 
-#' #study design using weighting strategy 1
-#' wlr.power.maxcombo(T = NULL, events = c(60, 80), alpha=alpha, 
-#'   power = NULL, side = 1, r = 1, n = 100, 
-#'   h0 = h0, S0=S0, h1 = h1, S1= S1, f.logHR = f.logHR, 
-#'   f.ws = fws1, F.entry=F.entry, G.ltfu=G.ltfu)
+#' #Drop-off
+#' eta0 = -log(1-0.03/12) #control arm monthly drop off rate 0.03/12.
+#' eta1 = -log(1-0.03/12) #control arm monthly drop off rate 0.03/12.
+#' G0 = function(t){1-exp(-eta0*t)}; G1 = function(t){1-exp(-eta1*t)}; 
+#' 
+#' #(a) Study design using weighted logrank test option 1
+#' wlr.power.maxcombo(DCO = c(24, 36), overall.alpha=0.025, sf = "LDOF", 
+#'   r = 1, n = 100, h0 = h0, S0=S0, h1 = h1, S1= S1, 
+#'   f.ws = fws1, Lambda=F.entry, G0=G0, G1=G1, 
+#'   mu.method = "Schoenfeld", cov.method = "H0")
 #'   
-#' #study design using weighting strategy 2
-#' wlr.power.maxcombo(T = NULL, events = c(60, 80), alpha=alpha, 
-#'   power = NULL, side = 1, r = 1, n = 100, 
-#'   h0 = h0, S0=S0, h1 = h1, S1= S1, f.logHR = f.logHR, 
-#'   f.ws = fws2, F.entry=F.entry, G.ltfu=G.ltfu)
+#' #(b) Study design using weighting strategy 2
+#' wlr.power.maxcombo(DCO = c(24, 36), overall.alpha=0.025, sf = "LDOF", 
+#'   r = 1, n = 100, h0 = h0, S0=S0, h1 = h1, S1= S1, 
+#'   f.ws = fws2, Lambda=F.entry, G0=G0, G1=G1, 
+#'   mu.method = "Schoenfeld", cov.method = "H0")
 #'   
-#' #Simulations for exploring 7 weighting strategies
-#' H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, A = 21, w=1.5, r=1, lambda0=log(2)/11.7, lambda1=log(2)/11.7*0.745,
-#' targetEvents = c(60, 80), sf = "LDOF", overall.alpha = 0.025, logrank="Y", fws=fws5)
+#' #(c) Simulations for exploring weighted logrank tests option 1 and 2
+#' events = rep(NA, 2); DCO=c(24, 36)
+#' for (i in 1:length(events)){events[i] = fe(DCO = DCO[i], r = 1, h0 = h0, S0 = S0, h1 = h1, S1 = S1, 
+#' Lambda = F.entry, n = 100, G0=G0, G1=G1)$e}
+#' 
+#' #(c1) Type I error
+#' H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, A = 21, w=1.5, r=1, lam0=lambda0, lam1=lambda0*0.7,
+#' drop0 = 0.03/12, drop1=0.03/12,
+#' targetEvents = events, sf = "LDOF", overall.alpha = 0.025, logrank="Y", fws.options=list(fws1, fws2))
 #' 
 #' #same as above
 #' H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, Lambda=F.entry, r=1, lam0=log(2)/11.7, lam1=log(2)/11.7*0.745,
@@ -151,7 +169,7 @@
 #' @export 
 simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda=NULL, r=1, lam0=log(2)/12, lam1=log(2)/12*0.7, 
     cuts=NULL, drop0=0, drop1=0, targetEvents = c(30, 60), 
-    sf = "LDOF", param = NULL, overall.alpha = 0.025, alpha = NULL,
+    sf = "LDOF", param = NULL, overall.alpha = 0.025, p1=NULL, cum.alpha=NULL, alpha = NULL,
     logrank="N", fws.options=list(fws5), H0 = "N", parallel=FALSE, n.cores=8, seed=2022, out.z = FALSE) {
 
     set.seed(seed)
@@ -171,7 +189,7 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda
   #if alpha is not provided, use sf to derive alpha. 
   #if alpha is provided, then sf is ignored.
   if(is.null(alpha) && !is.null(overall.alpha)){
-    alpha = f.alpha(overall.alpha=overall.alpha, sf=sf, timing=timing, param=param)
+    alpha = f.alpha(overall.alpha=overall.alpha, sf=sf, timing=timing, p1=p1, cum.alpha=cum.alpha, param=param)
   }
   
   wlr.sim = array(NA, dim=c(nSim, M, K, 5))
