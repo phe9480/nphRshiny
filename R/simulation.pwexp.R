@@ -40,8 +40,8 @@
 #' @param drop0 Drop Off rate per month, eg, 3% every year for control arm, then drop0=0.03/12
 #' @param drop1 Drop Off rate per month, eg, 1%, for experimental arm
 #' @param targetEvents A vector of target events is used to determine DCOs. For example, 
-#'              397 target events are used to determine IA DCO; and 496 events are used 
-#'              to determine the FA cutoff.
+#'              100 target events are used to determine IA DCO; and 150 events are used 
+#'              to determine the FA DCO. Must be integers.
 #' @param DCO   A vector of data cut-off time in months, calculated from first subject in. 
 #'              Default NULL. The date cut-off times will be determined by targetEvents.
 #'              If provided, then the targetEvents will be ignored.
@@ -163,6 +163,11 @@ simulation.pwexp = function(nSim=100, N = 600, A = 21, w=1.5, Lambda = NULL, r=1
   eta0 = -log(1-drop0)
   eta1 = -log(1-drop1)
   
+  #G0 Cumulative distribution function of drop-off for control arm. 
+  #For example, 3 percent drop-off in 12 months of followup means
+  #the hazard rate per month is 
+  #eta0 = -log(1-0.03/12), so G0=function(t){1-exp(-eta0*t)}.
+
   o = nphsim::nphsim(nsim=nSim,lambdaC=lam0,lambdaE=lam1, ssC=N/(r+1), ssE=N*r/(r+1),
              intervals=cuts, gamma=gamma, R=rep(1, A),eta=eta0, etaE=eta1,fixEnrollTime = FALSE)
   dat = o$simd

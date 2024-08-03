@@ -20,30 +20,32 @@
 #' @param  w Weight parameter in cumulative enrollment pattern. 
 #' The cumulative enrollment at month t is (t / A)^w, eg, at month 6, 
 #'   the enrollment is N*(6/24)^2 = N/16 for 24 months planned accrual period.
-#' @param Lambda Cumulative distribution function (CDF) for enrollment on (0, infinity). For example, uniform enrollment of 20 patients / month for 24 months has Lambda = function(t){t/24*as.numeric(t<= 24) + as.numeric(t>24)}.   
+#' @param Lambda Cumulative distribution function (CDF) for enrollment on (0, infinity). 
+#' For example, uniform enrollment of 20 patients / month for 24 months has 
+#' Lambda = function(t){t/24*as.numeric(t<= 24) + as.numeric(t>24)}. When Lambda is specified, A and w are ignored.
 #' @param  r Randomization ratio r:1, where r refers to the experimental arm, eg, r=2 in 2:1 ratio
-#' @param  lambda0 Hazard rates for control arm of intervals defined by cuts; for exponential(lambda0) distribution,
-#'         lambda0 = log(2) / median;
-#' @param  lambda1 Hazard rates for experimental arm for intervals; for exponential(lambda1) distribution,
-#'         lambda1 = log(2) / median; For delayed effect under H1, lambda1 is a vector (below).
+#' @param  lam0 Hazard rates for control arm of intervals defined by cuts; for exponential(lambda0) distribution,
+#'         lam0 = log(2) / median;
+#' @param  lam1 Hazard rates for experimental arm for intervals; for exponential(lambda1) distribution,
+#'         lam1 = log(2) / median; For delayed effect under H1, lambda1 is a vector (below).
 #' @param  cuts Timepoints to form intervals for piecewise exponential distribution. For example,
 #   \itemize{
 #   \item Proportional hazards with hr = 0.65. Then lambda0 = log(2)/m0, lambda1 = log(2)/m0*hr, cuts = NULL. 
 #   \item Delayed effect at month 6, and control arm has constant hazard (median m0) and 
 #'       experimental arm has hr = 0.6 after delay, then cuts = 6, and 
-#'       lamda0 = log(2) / m0 or lambda0 = rep(log(2) / m0, 2), 
-#'       lamda1 = c(log(2)/m0, log(2)/m0*hr). 
+#'       lam0 = log(2) / m0 or lam0 = rep(log(2) / m0, 2), 
+#'       lam1 = c(log(2)/m0, log(2)/m0*hr). 
 #   \item Delayed effect at month 6, and control arm has crossover to subsequent IO 
 #'       treatment after 24 mo, so its hazard decreases 20%. Then, 
-#'       lambda0 = c(log(2)/m0, log(2)/m0, log(2)/m0*0.8), 
-#'       lambda1 = c(log(2)/m0, log(2)/m0*hr, log(2)/m0*hr), and
+#'       lam0 = c(log(2)/m0, log(2)/m0, log(2)/m0*0.8), 
+#'       lam1 = c(log(2)/m0, log(2)/m0*hr, log(2)/m0*hr), and
 #'       cuts = c(6, 24), which forms 3 intervals (0, 6), (6, 24), (24, infinity)
 #       }
-#' @param dropOff0 Drop Off rate per month, eg, 1%, for control arm
-#' @param dropOff1 Drop Off rate per month, eg, 1%, for experimental arm
+#' @param drop0 Drop Off rate per month, eg, 1%, for control arm
+#' @param drop1 Drop Off rate per month, eg, 1%, for experimental arm
 #' @param targetEvents A vector of target events is used to determine DCOs. For example, 
-#'              397 target events are used to determine IA DCO; and 496 events are used 
-#'              to determine the FA cutoff.
+#'              100 target events are used to determine IA DCO; and 150 events are used 
+#'              to determine the FA DCO. Must be integers.
 #' @param  overall.alpha  Allocated overall alpha (one-sided) for group sequential design
 #' @param  sf Spending function. LanDeMets O'Brien Fleming: "LDOF", LanDeMets Pocock: "LDPK", "HSD": Hwang-Shih-DeCani spending function with parameter param.
 #' @param param parameter for Hwang-Shih-DeCani spending function
