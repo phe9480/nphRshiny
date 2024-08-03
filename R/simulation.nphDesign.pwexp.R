@@ -153,18 +153,25 @@
 #'   mu.method = "Schoenfeld", cov.method = "H0")
 #'   
 #' #(c) Simulations for exploring weighted logrank tests option 1 and 2
-#' events = rep(NA, 2); DCO=c(24, 36)
-#' for (i in 1:length(events)){events[i] = fe(DCO = DCO[i], r = 1, h0 = h0, S0 = S0, h1 = h1, S1 = S1, 
+#' e = rep(NA, 2); DCO=c(24, 36)
+#' for (i in 1:length(DCO)){e[i] = fe(DCO = DCO[i], r = 1, h0 = h0, S0 = S0, h1 = h1, S1 = S1, 
 #' Lambda = F.entry, n = 100, G0=G0, G1=G1)$e}
 #' 
-#' #(c1) Type I error
-#' H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, A = 21, w=1.5, r=1, lam0=lambda0, lam1=lambda0*0.7,
-#' drop0 = 0.03/12, drop1=0.03/12,
-#' targetEvents = events, sf = "LDOF", overall.alpha = 0.025, logrank="Y", fws.options=list(fws1, fws2))
+#' #(c1) Type I error; also output logrank test simulation results
+#' H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, r = 1, 
+#' A = 21, w=1.5,
+#' lam0=lambda0, lam1=lambda0*0.7,
+#' targetEvents = e, drop0 = 0.03/12, drop1=0.03/12,
+#' overall.alpha = 0.025, sf = "LDOF",
+#' H0 = "Y", logrank="Y", fws.options=list(fws1))
 #' 
-#' #same as above
-#' H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, Lambda=F.entry, r=1, lam0=log(2)/11.7, lam1=log(2)/11.7*0.745,
-#' targetEvents = c(60, 80), sf = "LDOF", overall.alpha = 0.025, logrank="Y", fws.options=list(fws5))
+#' #same as above; using F.entry function to replac A and w specifications.
+#' H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, r=1, 
+#' Lambda=F.entry, 
+#' lam0=lambda0, lam1=lambda0*0.7,
+#' targetEvents = e, drop0 = 0.03/12, drop1=0.03/12,
+#' overall.alpha = 0.025, sf = "LDOF",
+#' H0 = "Y", logrank="Y", fws.options=list(fws1))
 #' 
 #' @export 
 simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda=NULL, r=1, lam0=log(2)/12, lam1=log(2)/12*0.7, 
@@ -183,6 +190,7 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda
   
   #K analyses
   K=length(fws.options[[1]])
+  targetEvents = ceiling(targetEvents)
   
   timing = targetEvents / targetEvents[K]
   
