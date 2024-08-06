@@ -3,6 +3,8 @@
 export(HP)
 export(dmcr)
 export(f.alpha)
+export(f.dataCut)
+export(f.nEachMonth)
 export(fe)
 export(genSurv)
 export(lr.power.HaybittlePeto)
