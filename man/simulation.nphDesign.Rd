@@ -194,6 +194,7 @@ defines 3 analyses at 100, 200, and 300 events separately.
 \examples{
 
 #Utility functions
+lr = nphRshiny:::lr; fh01 = nphRshiny:::fh01; fh11 = nphRshiny:::fh11
 fws1 = list(IA1 = list(lr), FA = list(lr))
 fws2 = list(IA1 = list(lr), FA = list(fh01))
 fws3 = list(IA1 = list(fh01), FA = list(fh01))
@@ -223,6 +224,12 @@ F.entry = function(t){(t/21)^1.5*as.numeric(t <= 21) + as.numeric(t > 21)}
 #Drop-off
 drop0 = drop1 = 0.03/12
 
+e = rep(NA, 2); DCO=c(24, 36)
+eta0 = -log(1-drop0); G0=function(t){1-exp(-eta0*t)}
+eta1 = -log(1-drop1); G1=function(t){1-exp(-eta1*t)}
+for (i in 1:length(DCO)){e[i] = fe(DCO = DCO[i], r = 1, h0 = h0, S0 = S0, h1 = h1, S1 = S1, 
+Lambda = F.entry, n = 100, G0=G0, G1=G1)$e}
+
 #(a) Study design using weighted logrank test option 1
 wlr.power.maxcombo(DCO = c(24, 36), overall.alpha=0.025, sf = "LDOF", 
   r = 1, n = 100, h0 = h0, S0=S0, h1 = h1, S1= S1, 
@@ -236,9 +243,6 @@ wlr.power.maxcombo(DCO = c(24, 36), overall.alpha=0.025, sf = "LDOF",
   mu.method = "Schoenfeld", cov.method = "H0")
   
 #(c) Simulations for exploring weighted logrank tests option 1 and 2
-e = rep(NA, 2); DCO=c(24, 36)
-for (i in 1:length(DCO)){e[i] = fe(DCO = DCO[i], r = 1, h0 = h0, S0 = S0, h1 = h1, S1 = S1, 
-Lambda = F.entry, n = 100, G0=G0, G1=G1)$e}
 
 #(c1) Type I error; also output logrank test simulation results
 H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, r = 1, 
