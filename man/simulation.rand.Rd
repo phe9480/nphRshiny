@@ -5,10 +5,11 @@
 \title{Simulation of Two-Arm Trial Data Following Customized Survival Distribution with Non-uniform Accrual Pattern and Lost to Follow-up}
 \usage{
 simulation.rand(
-  nSim = 100,
+  nSim = 1,
   N = 600,
   A = 21,
   w = 1.5,
+  Lambda = NULL,
   r = 1,
   S0 = function(t) {
      exp(-log(2)/12 * t)
@@ -18,8 +19,7 @@ simulation.rand(
  },
   drop = c(0, 0),
   targetEvents = c(400, 500),
-  DCO = NULL,
-  seed = 2000
+  DCO = NULL
 )
 }
 \arguments{

@@ -13,7 +13,8 @@ simulation.pwexp(
   r = 1,
   lam0 = log(2)/12,
   lam1 = log(2)/12 * 0.65,
-  cuts = NULL,
+  cuts0 = NULL,
+  cuts1 = NULL,
   drop0 = 0,
   drop1 = 0,
   targetEvents = c(400, 500),
@@ -41,14 +42,11 @@ lam0 = log(2) / median;}
 \item{lam1}{Hazard rates for experimental arm for intervals; for exponential(lam1) distribution,
 lam1 = log(2) / median; For delayed effect under H1, lam1 is a vector (below).}
 
-\item{cuts}{Timepoints to form intervals for piecewise exponential distribution. For example,
-experimental arm has hr = 0.6 after delay, then cuts = 6, and
-lam0 = log(2) / m0 or lam0 = rep(log(2) / m0, 2),
-lam1 = c(log(2)/m0, log(2)/m0\emph{hr).
-treatment after 24 mo, so its hazard decreases 20\%. Then,
-lam0 = c(log(2)/m0, log(2)/m0, log(2)/m0}0.8),
-lam1 = c(log(2)/m0, log(2)/m0\emph{hr, log(2)/m0}hr), and
-cuts = c(6, 24), which forms 3 intervals (0, 6), (6, 24), (24, infinity)}
+\item{cuts0}{Timepoints to form intervals for piecewise exponential distribution for control arm.
+For example, cuts0 = c(6, 12) and lam0 = c(0.05, 0.07, 0.10) mean hazard 0.05 on (0, 6), 0.07 on (6, 12) and 0.1 on (12, infinity).
+length(cuts0) must be 1 less than length(lam0).}
+
+\item{cuts1}{Timepoints to form intervals for piecewise exponential distribution for experimental arm. See cuts0.}
 
 \item{drop0}{Drop Off rate per month, eg, 3\% every year for control arm, then drop0=0.03/12}
 
@@ -95,9 +93,9 @@ defines 3 analyses at 100, 200, and 300 events separately.
 #HR = 0.65, enrollment 24 months, weight 1.5, no drop offs; 
 #IA and FA are performed at 400 and 500 events respectively.
 
-sim.ph = simulation.pwexp(nSim=10, N = 600, A = 24, w=1.5, r=1, lam0=log(2)/12, lam1= log(2)/12*0.65, cuts=NULL, drop0= 0, drop1= 0, targetEvents = c(400, 500))
+sim.ph = simulation.pwexp(nSim=10, N = 600, A = 24, w=1.5, r=1, lam0=log(2)/12, lam1= log(2)/12*0.65, cuts0=NULL, cuts1=NULL, drop0= 0, drop1= 0, targetEvents = c(400, 500))
 #same as above
-sim.ph = simulation.pwexp(nSim=10, N = 600, Lambda= function(t){(t/24)^1.5*as.numeric(t<= 24) + as.numeric(t>24)}, r=1, lam0=log(2)/12, lam1= log(2)/12*0.65, cuts=NULL, drop0= 0, drop1= 0, targetEvents = c(400, 500))
+sim.ph = simulation.pwexp(nSim=10, N = 600, Lambda= function(t){(t/24)^1.5*as.numeric(t<= 24) + as.numeric(t>24)}, r=1, lam0=log(2)/12, lam1= log(2)/12*0.65, cuts0=NULL, cuts1=NULL, drop0= 0, drop1= 0, targetEvents = c(400, 500))
 km.IA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data=sim.ph[[1]][sim==1,])
 plot(km.IA,xlab="Month Since Randomization",ylab="Survival",lty=1:2,xlim=c(0,50))
 km.FA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data=sim.ph[[2]][sim==1,])
