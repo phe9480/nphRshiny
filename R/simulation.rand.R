@@ -80,70 +80,8 @@
 #' 
 #' 
 #' @export 
-simulation.rand = function(nSim=100, N = 600, A = 21, w=1.5, r=1, S0=function(t){exp(-log(2)/12*t)}, S1=function(t){exp(-log(2)/12*0.65*t)}, drop=c(0,0), targetEvents = c(400, 500), DCO = NULL, seed=2000) {
+simulation.rand = function(nSim=1, N = 600, A = 21, w=1.5, Lambda=NULL, r=1, S0=function(t){exp(-log(2)/12*t)}, S1=function(t){exp(-log(2)/12*0.65*t)}, drop=c(0,0), targetEvents = c(400, 500), DCO = NULL) {
 
-  f.nEachMonth = function (N=600, A=24, w=2, r=2) {
-    
-    N1 = N * (r/(r+1))
-    N0 = N - N1
-    
-    #When r > 1, the control arm has smaller number of pts. 
-    #Just need to determine enrollment for control arm per month, 
-    #then to obtain enrollment for experimental arm by n1i = n0i * r.
-    
-    n1 = n0 = rep(NA, A) #enrollment by month
-    randdt1 = rep(NA, N1) #randomization date
-    randdt0 = rep(NA, N0)
-    
-    #Determine number of pts per month for control arm
-    #(i-1)th month cumulative enrolled pts
-    cLastN0 = 0
-    for (i in 1:A) {
-      #ith month: cumulative #pts
-      cN0i = max(round((i/A)^w * N0), 1)
-      
-      n0[i] = max(cN0i - cLastN0, 1)
-      if (i == A) {n0[i] = N0 - sum(n0[1:(A-1)]) }
-      cLastN0 = cN0i  
-    }
-    n1 = n0 * r
-    
-    #Patch for extreme rare scenarios that 0 enrollment in the last month
-    if(n0[A] == 0 && n0[A-1] > 1){n0[A-1] = n0[A-1]-1; n0[A]=1}
-    if(n1[A] == 0 && n1[A-1] > 1){n1[A-1] = n1[A-1]-1; n1[A]=1}
-    
-    o = list()
-    o$n0 = n0
-    o$n1 = n1
-    return(o)
-  }
-  ###########################
-  #Data cut utility
-  ###########################
-  f.dataCut = function(data, targetEvents = 397, DCO = NULL) {
-    data0 = data
-    data0.order <- data0[order(as.numeric(data0$calendarTime)), ] #order by calendar time
-    data.event <- data0.order[data0.order$cnsr == 0,] #Events Only
-    
-    data.event$event.seq <- seq.int(nrow(data.event)) #event sequence number
-    if(is.null(DCO)){
-      #Data cutoff in calendar time added to the original dataframe as a variable
-      data0$calendarCutoff = as.numeric(data.event$calendarTime[data.event$event.seq == targetEvents])
-    } else {
-      data0$calendarCutoff = DCO
-    }
-    data0$survTimeCut = ifelse(as.numeric(data0$calendarTime) <= as.numeric(data0$calendarCutoff), as.numeric(data0$survTime), as.numeric(data0$calendarCutoff) - as.numeric(data0$enterTime))
-    data0$cnsrCut = ifelse(as.numeric(data0$calendarTime) <= as.numeric(data0$calendarCutoff), data0$cnsr, 1)
-  
-    data0$group = ifelse(data0$treatment == "control", 0, 1)  
-    
-    return(data0)
-  }
-  
-  nEachMonth = f.nEachMonth(N=N, A=A, w=w, r=r)
-
-  set.seed(seed)
-  
   #number of analyses
   if(is.null(DCO)){
     L = length(targetEvents)
@@ -151,7 +89,7 @@ simulation.rand = function(nSim=100, N = 600, A = 21, w=1.5, r=1, S0=function(t)
     L = length(DCO)
   }
   
-  nEachMonth = f.nEachMonth(N=N, A=A, w=w, r=r)
+  nEachMonth = f.nEachMonth(N=N, A=A, w=w, r=r, Lambda=Lambda)
   n0 = sum(nEachMonth$n0); n1 = sum(nEachMonth$n1)
   CDF0 = function(t){1-S0(t)}
   CDF1 = function(t){1-S1(t)}

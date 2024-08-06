@@ -59,7 +59,7 @@
 #' Experimental arm has delayed effect of 6 months. The HR after delay is 0.65.
 #' Three analyses are performed at 300, 400, and 500 events.
 #' data0 = simulation.pwexp(nSim=1, N = 600, A = 24, w=1.5, r=1, lam0=log(2)/12, 
-#'       lam1=c(log(2)/12, log(2)/12*0.65), cuts=6, drop0= 0, drop1= 0, 
+#'       lam1=c(log(2)/12, log(2)/12*0.65), cuts0=NULL, cuts1=NULL, drop0= 0, drop1= 0, 
 #'       targetEvents = c(300, 400, 500))
 #' data1 = data0[[1]][sim==1,]; data2 = data0[[2]][sim==1,]; data3 = data0[[3]][sim==1,]
 #' #Add strata variables       

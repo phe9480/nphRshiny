@@ -197,7 +197,6 @@ simulation.mcr = function(nSim=100, N = 600, A = 18, w=1.5, Lambda=NULL, r=1, p=
     ############################
     #Drop Off data for each arm
     ############################
-    if (is.na(drop[2])){drop = rep(drop[1], 2)}
     if (drop[1] > 0) {W0 = rexp(n0, rate=-log(1-drop[1]))} else {W0 = rep(Inf, n0)}
     if (drop[2] > 0) {W1 = rexp(n1, rate=-log(1-drop[2]))} else {W1 = rep(Inf, n1)}
     

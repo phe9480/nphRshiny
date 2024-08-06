@@ -1,21 +1,20 @@
-#' Trial Data Simulations and Analysis Using Weighted Log-rank Test For Piecewise Exponential Distribution
+#' Trial Data Simulations and Analysis Using Weighted Log-rank Test with non-uniform accrual pattern and lost to follow-up
 #'
 #' Simulate Randomized two-arm trial data with the following characteristics:  
 #' (1) randomization time (entry time) is generated according to the specified non-uniform accrual pattern, 
 #' i.e. the cumulative recruitment at calendar time t is (t/A)^w with weight w and enrollment complete in A months.
-#' w = 1 means uniform enrollment, which is usually not realistic due to graduate sites activation process.
-#' (2) Survival time follows piece-wise exponential distribution for each arm.
-#' (3) N total patients with r:1 randomization ratio
-#' (4) Random drop off can be incorporated into the censoring process.
-#' (5) Data cutoff dates are determined by specified vector of target events for all analyses.
-#' (6) A dataset is generated for each analysis according to the specified number of target events. 
+#' w = 1 means uniform enrollment, which is usually not realistic due to graduate sites activation process. It also allows customized enrollment pattern by specifying the cumulative enrollment distribution with domain (0, infinity).
+#' (2) Survival time follows commonly used distributions and also allow customized survival functions. 
+#' (3) Allow different drop off rates for both arms.
+#' (4) Data cutoff dates are determined by specified vector of target events for all analyses.
+#' (5) A dataset is generated for each analysis according to the specified number of target events. 
 #'     Multiple analyses can be specified according to the vector of targetEvents, eg, targetEvents = c(100, 200, 300) 
 #'     defines 3 analyses at 100, 200, and 300 events separately.
-#' (7) Weighted log-rank test is then performed for each simulated group sequential dataset.
+#' (6) Weighted log-rank test is then performed for each simulated group sequential dataset.
 #'
 #'
 #' @param  nSim Number of trials
-#' @param  N Total number patients in two arms.
+#' @param  n Total number patients in two arms.
 #' @param  A Total accrual period in months
 #' @param  w Weight parameter in cumulative enrollment pattern. 
 #' The cumulative enrollment at month t is (t / A)^w, eg, at month 6, 
@@ -24,23 +23,29 @@
 #' For example, uniform enrollment of 20 patients / month for 24 months has 
 #' Lambda = function(t){t/24*as.numeric(t<= 24) + as.numeric(t>24)}. When Lambda is specified, A and w are ignored.
 #' @param  r Randomization ratio r:1, where r refers to the experimental arm, eg, r=2 in 2:1 ratio
-#' @param  lam0 Hazard rates for control arm of intervals defined by cuts; for exponential(lambda0) distribution,
-#'         lam0 = log(2) / median;
-#' @param  lam1 Hazard rates for experimental arm for intervals; for exponential(lambda1) distribution,
-#'         lam1 = log(2) / median; For delayed effect under H1, lambda1 is a vector (below).
-#' @param  cuts Timepoints to form intervals for piecewise exponential distribution. For example,
-#   \itemize{
-#   \item Proportional hazards with hr = 0.65. Then lambda0 = log(2)/m0, lambda1 = log(2)/m0*hr, cuts = NULL. 
-#   \item Delayed effect at month 6, and control arm has constant hazard (median m0) and 
-#'       experimental arm has hr = 0.6 after delay, then cuts = 6, and 
-#'       lam0 = log(2) / m0 or lam0 = rep(log(2) / m0, 2), 
-#'       lam1 = c(log(2)/m0, log(2)/m0*hr). 
-#   \item Delayed effect at month 6, and control arm has crossover to subsequent IO 
-#'       treatment after 24 mo, so its hazard decreases 20%. Then, 
-#'       lam0 = c(log(2)/m0, log(2)/m0, log(2)/m0*0.8), 
-#'       lam1 = c(log(2)/m0, log(2)/m0*hr, log(2)/m0*hr), and
-#'       cuts = c(6, 24), which forms 3 intervals (0, 6), (6, 24), (24, infinity)
-#       }
+#' @param dist0 Type of distribution for control arm. The following options are available. 
+#' (1) "exponential": lam0 required;
+#' (2) "weibull": shape0 and scale0 required; 
+#' (3) "piecewise exponential": lamb0 and cuts0 required;
+#' (4) "mixture cure rate of exponential": p10 and lam0 required; 
+#' (5) "mixture cure rate of weibull": p10, shape0, and scale0 required
+#' (6) "customized": S0 as a survival function is required.
+#' @param  lam0 Hazard rates for control arm for intervals; for exponential distribution,
+#'         lam0 = log(2) / median; For piecewise exponential distribution, lam0 is a vector of length 1 greater than length of cuts0.
+#' @param shape0 shape parameter for weibull distribution for control arm. Refer to rweibull() for details.
+#' @param scale0 scale parameter for weibull distribution for control arm. Refer to rweibull() for details. 
+#' @param p10 cure rate parameter for mixture cure rate distribution for control arm
+#' @param S0 Survival function for customized distribution for control arm.
+#' @param cuts0 Cut points for piecewise exponential distribution for control arm
+#' @param dist1 Type of distribution for experimental arm. See dist0. 
+#' @param lam1 hazard rate for piecewise exponential distribution for experimental arm
+#' @param shape1 shape parameter for weibull distribution for experimental arm. Refer to rweibull() for details.
+#' @param scale1 scale parameter for weibull distribution for experimental arm. Refer to rweibull() for details. 
+#' @param p11 cure rate parameter for mixture cure rate distribution for experimental arm
+#' @param S1 Survival function for customized distribution for control arm.
+#' @param cuts1 Cut points for piecewise exponential distribution for experimental arm
+#' @param  lam1 Hazard rates for experimental arm for intervals; for exponential distribution,
+#'         lam1 = log(2) / median; For piecewise exponential distribution, lam1 is a vector of length 1 greater than length of cuts1.
 #' @param drop0 Drop Off rate per month, eg, 1%, for control arm
 #' @param drop1 Drop Off rate per month, eg, 1%, for experimental arm
 #' @param targetEvents A vector of target events is used to determine DCOs. For example, 
@@ -121,7 +126,7 @@
 #' #Weighted logrank tests options
 #' fws = list(fws1, fws2, fws3, fws4, fws5, fws6)
 #' 
-#' #Example (1): Simulate 10 samples from proportional HR
+#' #Example (1): Simulate 10 samples from proportional HR with HR = 0.7
 #' 
 #' #Hazard and survival distributions
 #' 
@@ -131,16 +136,14 @@
 #' S0 = function(t){exp(-lambda0 * t)}
 #' 
 #' #Experimental Arm
-#' h1 = function(t){lambda0*0.7}; 
-#' S1 = function(t){exp(-lambda0 *0.7* t)}
+#' HR = 0.7; h1 = function(t){lambda0*HR}; 
+#' S1 = function(t){exp(-lambda0 *HR* t)}
 #' 
 #' #Enrollment
 #' F.entry = function(t){(t/21)^1.5*as.numeric(t <= 21) + as.numeric(t > 21)}
 #' 
 #' #Drop-off
-#' eta0 = -log(1-0.03/12) #control arm monthly drop off rate 0.03/12.
-#' eta1 = -log(1-0.03/12) #control arm monthly drop off rate 0.03/12.
-#' G0 = function(t){1-exp(-eta0*t)}; G1 = function(t){1-exp(-eta1*t)}; 
+#' drop0 = drop1 = 0.03/12
 #' 
 #' #(a) Study design using weighted logrank test option 1
 #' wlr.power.maxcombo(DCO = c(24, 36), overall.alpha=0.025, sf = "LDOF", 
@@ -175,17 +178,36 @@
 #' overall.alpha = 0.025, sf = "LDOF",
 #' H0 = "Y", logrank="Y", fws.options=list(fws1))
 #' 
+#' #same as above using the general function
+#' simulation.nphDesign(nSim=5, n = 100, r=1, Lambda=F.entry, drop0=0.03/12, drop1=0.03/12, 
+#' dist0 = "exponential", lam0=lambda0, shape0 = NULL, scale0 = NULL, p10 = NULL, S0 = NULL, cuts0 = NULL,
+#' dist1 = "exponential", lam1=lambda0, shape1 = NULL, scale1 = NULL, p11 = NULL, S1 = NULL, cuts1=NULL, 
+#' targetEvents = e, sf = "LDOF", param = NULL, overall.alpha = 0.025, p1=NULL, cum.alpha=NULL,
+#' logrank="N", fws.options=list(fws1), 
+#' parallel=FALSE, n.cores=8, seed=2022, out.z = FALSE)
+#' 
+#' 
 #' @export 
-simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda=NULL, r=1, lam0=log(2)/12, lam1=log(2)/12*0.7, 
-    cuts=NULL, drop0=0, drop1=0, targetEvents = c(30, 60), 
-    sf = "LDOF", param = NULL, overall.alpha = 0.025, p1=NULL, cum.alpha=NULL, alpha = NULL,
-    logrank="N", fws.options=list(fws5), H0 = "N", parallel=FALSE, n.cores=8, seed=2022, out.z = FALSE) {
+simulation.nphDesign = function(nSim=3, n = 100, r=1, A = 21, w=1.5, 
+                                Lambda=NULL, drop0=0, drop1=0, 
+                                dist0 = "exponential", lam0=log(2)/12,
+                                shape0 = NULL, scale0 = NULL,
+                                p10 = NULL, S0 = NULL, cuts0 = NULL,
+                                dist1 = "exponential", lam1=log(2)/12*0.7,
+                                shape1 = NULL, scale1 = NULL,
+                                p11 = NULL, S1 = NULL, cuts1=NULL, 
+                                targetEvents = c(30, 60), 
+                                sf = "LDOF", param = NULL, overall.alpha = 0.025, p1=NULL, cum.alpha=NULL,
+                                logrank="N", fws.options=list(fws5), 
+                                parallel=FALSE, n.cores=8, seed=2022, out.z = FALSE) {
 
     set.seed(seed)
     side = 1 #always one-sided
-  #Simulation for checking type I error
-  if (H0 == "Y"){lam1 = lam0} 
-  
+    
+    #Entry data
+    nEachMonth = f.nEachMonth(N=n, A=A, w=w, r=r, Lambda=Lambda)
+    n0 = sum(nEachMonth$n0); n1 = sum(nEachMonth$n1)
+    
   ##############################
   #M Options of test strategies
   M = length(fws.options)
@@ -196,14 +218,16 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda
   
   timing = targetEvents / targetEvents[K]
   
-  #if alpha is not provided, use sf to derive alpha. 
-  #if alpha is provided, then sf is ignored.
-  if(is.null(alpha) && !is.null(overall.alpha)){
-    alpha = f.alpha(overall.alpha=overall.alpha, sf=sf, timing=timing, p1=p1, cum.alpha=cum.alpha, param=param)
-  }
-  
+  #incremental alpha
+  alpha = f.alpha(overall.alpha=overall.alpha, sf=sf, timing=timing, p1=p1, cum.alpha=cum.alpha, param=param)
+
+  #weighted logrank test statistics
   wlr.sim = array(NA, dim=c(nSim, M, K, 5))
   if (logrank == "Y") {lr.sim = array(NA, dim=c(nSim, K, 5))}
+  
+  #output datasets
+  dati.out = list(NULL)
+  if (L > 1){for (k in 2:L){dati.out = c(dati.out, list(NULL))}}
   
   if(parallel){
     ##############
@@ -225,8 +249,8 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda
     
     for (i in 1:nSim) {
       #(1). Generate data
-      dati = simulation.pwexp(nSim=1, N = N, A = A, w=w, Lambda=Lambda, r=r, lam0=lam0, lam1=lam1, 
-                       cuts0=cuts0, cuts1=cuts1, drop0=drop0, drop1=drop1, targetEvents = targetEvents)
+      dati = simulation.pwexp(nSim=1, N = n, A = A, w=w, Lambda=Lambda, r=r, lam0=lam0, lam1=lam1, 
+                       cuts=cuts, drop0=drop0, drop1=drop1, targetEvents = targetEvents)
  
       sim.data[[i]]<-dati
     }
@@ -247,15 +271,80 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda
     }    
   }else{
     for (i in 1:nSim) {
-      #(1). Generate data
-      dati = simulation.pwexp(nSim=1, N = N, A = A, w=w, Lambda=Lambda, r=r, 
-                              lam0=lam0, lam1=lam1, 
-                       cuts0=cuts0, cuts1=cuts1, drop0=drop0, drop1=drop1, targetEvents = targetEvents)
+      #(1). Generate survival data for each arm
+      T0 = genSurv(dist = dist0, n = n0, lam=lam0, shape=shape0, scale=scale0,
+                   p1=p10, S=S0, cuts=cuts0)
+      T1 = genSurv(dist = dist1, n = n1, lam=lam1, shape=shape1, scale=scale1,
+                   p1=p11, S=S1, cuts=cuts1)
       
-      #(3). Testing strategy m
+      #Permutation of the original ordered samples
+      T0 = sample(T0); T1 = sample(T1)
+      
+      #(2). Drop Off data for each arm
+      ############################
+      if (drop0 > 0) {W0 = rexp(n0, rate=-log(1-drop0))} else {W0 = rep(Inf, n0)}
+      if (drop1 > 0) {W1 = rexp(n1, rate=-log(1-drop1))} else {W1 = rep(Inf, n1)}
+      
+      #(3). Censor data from Drop-off
+      ############################
+      Y0 = apply(cbind(T0, W0), 1, min)
+      Y1 = apply(cbind(T1, W1), 1, min)
+      
+      event0 = as.numeric(T0 < Inf)
+      event0[W0 < T0] = 0
+      event1 = as.numeric(T1 < Inf)
+      event1[W1 < T1] = 0
+      
+      #(4). EnterTime, CalendarTime
+      ############################
+      enterTime0 = rep(NA, n0)
+      enterTime0[1:nEachMonth$n0[1]] = runif(nEachMonth$n0[1], min=0, max=1)
+      if (A > 1) {for (m in 2:A){
+        LL = sum(nEachMonth$n0[1:(m-1)])+1
+        UU = sum(nEachMonth$n0[1:m])
+        enterTime0[LL:UU] = runif(nEachMonth$n0[m], min=m-1, max=m)
+      }}
+      
+      enterTime1 = rep(NA, n1)
+      enterTime1[1:nEachMonth$n1[1]] = runif(nEachMonth$n1[1], min=0, max=1)
+      if (A > 1) {for (m in 2:A){
+        LL = sum(nEachMonth$n1[1:(m-1)])+1
+        UU = sum(nEachMonth$n1[1:m])
+        enterTime1[LL:UU] = runif(nEachMonth$n1[m], min=m-1, max=m)
+      }}
+      
+      #(5). Assemble data before cut
+      ############################
+      sim = rep(i, n)
+      treatment = c(rep("control", n0), rep("experimental", n1))
+      enterTime = c(enterTime0, enterTime1)
+      survTime = as.numeric(c(Y0, Y1))
+      
+      #trick infinity
+      survTime[survTime > 1e6] = 1e6
+      calendarTime = as.numeric(enterTime) + as.numeric(survTime)
+      cnsr = c(1-event0, 1-event1)
+      
+      dati = data.frame(cbind(sim, enterTime, calendarTime, survTime, cnsr))
+      dati$treatment = treatment
+      dati$group = ifelse(dati$treatment == "control", 0, 1)
+      
+      #(6). Cut data
+      ############################
+      dati.cut = NULL
+      for (ii in 1:L){
+        dati.cut[[ii]] = f.dataCut(data=dati, targetEvents=targetEvents[ii], DCO = DCO[ii])
+        dati.out[[ii]] = rbind(dati.out[[ii]], dati.cut[[ii]])
+      }
+      
+      #dati = simulation.pwexp(nSim=1, N = n, A = A, w=w, Lambda=Lambda, r=r, 
+      #                        lam0=lam0, lam1=lam1, cuts0=cuts0, cuts1=cuts1,
+      #                        drop0=drop0, drop1=drop1, targetEvents = targetEvents)
+      
+      #(7). Testing strategy m
       for (m in 1:M){    
         #Perform weighted log-rank test for each analysis in strategy m
-        wlri = wlr.inference(data=dati, alpha = alpha, f.ws=fws.options[[m]])$test.results
+        wlri = wlr.inference(data=dati.out, alpha = alpha, f.ws=fws.options[[m]])$test.results
         wlri = wlri[!duplicated(wlri$analysis),]
         wlri$result = as.numeric(wlri$inference=="Positive")
         wlr.sim[i, m, , ] = as.matrix(wlri[,c(2,3,5,6,8)])
@@ -293,6 +382,7 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda
           lr.sim[i, j, 5] = as.numeric(z > z.bd[j])
         }
       }
+      
     }
   }
   

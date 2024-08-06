@@ -24,19 +24,10 @@
 #'         lam0 = log(2) / median;
 #' @param  lam1 Hazard rates for experimental arm for intervals; for exponential(lam1) distribution,
 #'         lam1 = log(2) / median; For delayed effect under H1, lam1 is a vector (below).
-#' @param  cuts Timepoints to form intervals for piecewise exponential distribution. For example,
-#   \itemize{
-#   \item Proportional hazards with hr = 0.65. Then lam0 = log(2)/m0, lam1 = log(2)/m0*hr, cuts = NULL. 
-#   \item Delayed effect at month 6, and control arm has constant hazard (median m0) and 
-#'       experimental arm has hr = 0.6 after delay, then cuts = 6, and 
-#'       lam0 = log(2) / m0 or lam0 = rep(log(2) / m0, 2), 
-#'       lam1 = c(log(2)/m0, log(2)/m0*hr). 
-#   \item Delayed effect at month 6, and control arm has crossover to subsequent IO 
-#'       treatment after 24 mo, so its hazard decreases 20%. Then, 
-#'       lam0 = c(log(2)/m0, log(2)/m0, log(2)/m0*0.8), 
-#'       lam1 = c(log(2)/m0, log(2)/m0*hr, log(2)/m0*hr), and
-#'       cuts = c(6, 24), which forms 3 intervals (0, 6), (6, 24), (24, infinity)
-#       }
+#' @param  cuts0 Timepoints to form intervals for piecewise exponential distribution for control arm. 
+#' For example, cuts0 = c(6, 12) and lam0 = c(0.05, 0.07, 0.10) mean hazard 0.05 on (0, 6), 0.07 on (6, 12) and 0.1 on (12, infinity). 
+#' length(cuts0) must be 1 less than length(lam0).
+#' @param  cuts1 Timepoints to form intervals for piecewise exponential distribution for experimental arm. See cuts0.
 #' @param drop0 Drop Off rate per month, eg, 3% every year for control arm, then drop0=0.03/12
 #' @param drop1 Drop Off rate per month, eg, 1%, for experimental arm
 #' @param targetEvents A vector of target events is used to determine DCOs. For example, 
@@ -63,9 +54,9 @@
 #' #HR = 0.65, enrollment 24 months, weight 1.5, no drop offs; 
 #' #IA and FA are performed at 400 and 500 events respectively.
 #' 
-#' sim.ph = simulation.pwexp(nSim=10, N = 600, A = 24, w=1.5, r=1, lam0=log(2)/12, lam1= log(2)/12*0.65, cuts=NULL, drop0= 0, drop1= 0, targetEvents = c(400, 500))
+#' sim.ph = simulation.pwexp(nSim=10, N = 600, A = 24, w=1.5, r=1, lam0=log(2)/12, lam1= log(2)/12*0.65, cuts0=NULL, cuts1=NULL, drop0= 0, drop1= 0, targetEvents = c(400, 500))
 #' #same as above
-#' sim.ph = simulation.pwexp(nSim=10, N = 600, Lambda= function(t){(t/24)^1.5*as.numeric(t<= 24) + as.numeric(t>24)}, r=1, lam0=log(2)/12, lam1= log(2)/12*0.65, cuts=NULL, drop0= 0, drop1= 0, targetEvents = c(400, 500))
+#' sim.ph = simulation.pwexp(nSim=10, N = 600, Lambda= function(t){(t/24)^1.5*as.numeric(t<= 24) + as.numeric(t>24)}, r=1, lam0=log(2)/12, lam1= log(2)/12*0.65, cuts0=NULL, cuts1=NULL, drop0= 0, drop1= 0, targetEvents = c(400, 500))
 #' km.IA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data=sim.ph[[1]][sim==1,])
 #' plot(km.IA,xlab="Month Since Randomization",ylab="Survival",lty=1:2,xlim=c(0,50))
 #' km.FA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data=sim.ph[[2]][sim==1,])
@@ -98,11 +89,14 @@
 #' plot(km.FA,xlab="Month Since Randomization",ylab="Survival",lty=1:2,xlim=c(0,36))
 #' 
 #' @export 
-simulation.pwexp = function(nSim=100, N = 600, A = 21, w=1.5, Lambda = NULL, r=1, lam0=log(2)/12, lam1=log(2)/12*0.65, cuts=NULL, drop0=0, drop1=0, targetEvents = c(400, 500), DCO = NULL) {
+simulation.pwexp = function(nSim=100, N = 600, A = 21, w=1.5, Lambda = NULL, 
+                            r=1, lam0=log(2)/12, lam1=log(2)/12*0.65, 
+                            cuts0=NULL, cuts1=NULL, drop0=0, drop1=0, 
+                            targetEvents = c(400, 500), DCO = NULL) {
 
   f.nEachMonth = function (N=600, A=24, w=2, r=2, Lambda=NULL) {
     
-    N1 = N * (r/(r+1))
+    N1 = round(N * (r/(r+1)))
     N0 = N - N1
     
     #When r > 1, the control arm has smaller number of pts. 
@@ -167,9 +161,62 @@ simulation.pwexp = function(nSim=100, N = 600, A = 21, w=1.5, Lambda = NULL, r=1
   #For example, 3 percent drop-off in 12 months of followup means
   #the hazard rate per month is 
   #eta0 = -log(1-0.03/12), so G0=function(t){1-exp(-eta0*t)}.
-
-  o = nphsim::nphsim(nsim=nSim,lambdaC=lam0,lambdaE=lam1, ssC=N/(r+1), ssE=N*r/(r+1),
-             intervals=cuts, gamma=gamma, R=rep(1, A),eta=eta0, etaE=eta1,fixEnrollTime = FALSE)
+  
+  #Determine intervals, lambdaC, lambdaE
+  if (is.null(cuts0) && is.null(cuts1)){
+    intervals = NULL
+    lam0new = lam0
+    lam1new = lam1
+  }
+  if (is.null(cuts0) && !is.null(cuts1)){
+    intervals = rep(NA, length(cuts1)); intervals[1] = cuts1[1]
+    for (i in 2:length(cuts1)){
+      intervals[i] = cuts1[i] - cuts1[i-1]
+    }
+    lam0new = rep(lam0[1], length(cuts1))
+    lam1new = lam1
+  }
+  if (!is.null(cuts0) && is.null(cuts1)){
+    intervals = rep(NA, length(cuts0)); intervals[1] = cuts0[1]
+    for (i in 2:length(cuts0)){
+      intervals[i] = cuts0[i] - cuts0[i-1]
+    }
+    lam0new = lam0
+    lam1new = rep(lam1[1], length(cuts0))
+  }
+  if (!is.null(cuts0) && !is.null(cuts1)){
+    cuts = sort(unique(c(cuts0, cuts1)))
+    intervals = rep(NA, length(cuts)); intervals[1] = cuts[1]
+    for (i in 2:length(cuts)){
+      intervals[i] = cuts[i] - cuts[i-1]
+    }
+  
+    lam0new = lam1new = rep(NA, (length(cuts)+1))
+    for (i in 1:length(cuts)){
+      for (j in 1:length(cuts0)){
+        if (cuts0[j] == cuts[i]) {lam0new[i] = lam0[j]}
+      }
+      for (j in 1:length(cuts1)){
+        if (cuts1[j] == cuts[i]) {lam1new[i] = lam1[j]}
+      }
+    }
+    for (i in length(lam0new):1){ if (!is.na(lam0new[i])){ix0 = i; break;}}
+    for (i in ix0:1){
+      if (i > 1 && !is.na(lam0new[i]) && is.na(lam0new[i-1])){lam0new[i-1] = lam0new[i]}
+    }
+    if (ix0 < length(lam0new)) {
+      for (i in (ix0+1):length(lam0new)){lam0new[i] = lam0[length(lam0)]}
+    }
+  for (i in length(lam1new):1){ if (!is.na(lam1new[i])){ix1 = i; break;}}
+  for (i in ix1:1){
+    if (i > 1 && !is.na(lam1new[i]) && is.na(lam1new[i-1])){lam1new[i-1] = lam1new[i]}
+  }
+  if (ix1 < length(lam1new)) {
+    for (i in (ix1+1):length(lam1new)){lam1new[i] = lam1[length(lam1)]}
+  }
+  }
+  o = nphsim::nphsim(nsim=nSim,lambdaC=lam0new,lambdaE=lam1new, ssC=N/(r+1), ssE=N*r/(r+1),
+             intervals=intervals, gamma=gamma, R=rep(1, A),eta=eta0, etaE=eta1,fixEnrollTime = FALSE)
   dat = o$simd
   data.out = NULL
   #number of analyses
@@ -199,3 +246,4 @@ simulation.pwexp = function(nSim=100, N = 600, A = 21, w=1.5, Lambda = NULL, r=1
   }
   return(data.out)
 }
+

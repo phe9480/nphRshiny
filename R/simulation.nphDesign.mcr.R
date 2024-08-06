@@ -1,4 +1,4 @@
-#' Trial Data Simulations and Analysis Using Weighted Log-rank Test For Piecewise Exponential Distribution
+#' Trial Data Simulations and Analysis Using Weighted Log-rank Test For Mixture Cure Rate Distribution
 #'
 #' Simulate Randomized two-arm trial data with the following characteristics:  
 #' (1) randomization time (entry time) is generated according to the specified non-uniform accrual pattern, 
@@ -226,7 +226,7 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda
     for (i in 1:nSim) {
       #(1). Generate data
       dati = simulation.pwexp(nSim=1, N = N, A = A, w=w, Lambda=Lambda, r=r, lam0=lam0, lam1=lam1, 
-                       cuts0=cuts0, cuts1=cuts1, drop0=drop0, drop1=drop1, targetEvents = targetEvents)
+                       cuts=cuts, drop0=drop0, drop1=drop1, targetEvents = targetEvents)
  
       sim.data[[i]]<-dati
     }
@@ -250,7 +250,7 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda
       #(1). Generate data
       dati = simulation.pwexp(nSim=1, N = N, A = A, w=w, Lambda=Lambda, r=r, 
                               lam0=lam0, lam1=lam1, 
-                       cuts0=cuts0, cuts1=cuts1, drop0=drop0, drop1=drop1, targetEvents = targetEvents)
+                       cuts=cuts, drop0=drop0, drop1=drop1, targetEvents = targetEvents)
       
       #(3). Testing strategy m
       for (m in 1:M){    
