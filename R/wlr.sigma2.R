@@ -15,7 +15,7 @@
 #' @param S1 Survival function of experimental arm. In general, S1(t) = exp(- integral of h1(u) for u from 0 to t).
 #'           but providing S1(t) can improves computational efficiency and 
 #'           usually the survival function is known in study design. The density function f1(t) = h1(t) * S1(t).
-#' @param cuts A vector of cut points to define piecewise distributions. 
+#' @param cuts A vector of cut points to define piecewise distributions. Default NULL.
 #' If cuts is not specified or incorrectly specified, it might occasionally have numerical integration issue.
 #' @param  rho Parameter for Fleming-Harrington (rho, gamma) weighted log-rank test.
 #' @param  gamma Parameter for Fleming-Harrington (rho, gamma) weighted log-rank test.
@@ -58,7 +58,7 @@
 wlr.sigma2 = function(DCO = 24, r = 1, 
                      h0 = function(t){log(2)/12}, S0= function(t){exp(-log(2)/12 * t)},
                      h1 = function(t){log(2)/12*0.70}, S1= function(t){exp(-log(2)/12 * 0.7 * t)}, 
-                     cuts=c(6), 
+                     cuts=NULL, 
                      rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
                      Lambda = function(t){(t/18)*as.numeric(t <= 18) + as.numeric(t > 18)}, 
                      G0 = function(t){0}, G1 = function(t){0}, Hypo="H1"){
