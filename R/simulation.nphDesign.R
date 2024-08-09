@@ -337,7 +337,7 @@ simulation.nphDesign = function(nSim=3, n = 100, r=1, A = 21, w=1.5,
       ############################
       dati.cut = NULL
       for (ii in 1:K){
-        dati.cut[[ii]] = f.dataCut(data=dati, targetEvents=targetEvents[ii], DCO = DCO[ii])
+        dati.cut[[ii]] = f.dataCut(data=dati, targetEvents=targetEvents[ii])
         dati.out[[ii]] = rbind(dati.out[[ii]], dati.cut[[ii]])
       }
       
