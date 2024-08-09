@@ -369,7 +369,7 @@ simulation.nphDesign = function(nSim=3, n = 100, r=1, A = 21, w=1.5,
           if(side == 1) {z.bd = qnorm(1-overall.alpha)} else{z.bd = qnorm(1-overall.alpha/2)}
         }
         for (j in 1:K){
-          lr.test = survival::survdiff(survival::Surv(survTimeCut, 1-cnsrCut) ~ group, data = dati[[j]])
+          lr.test = survival::survdiff(survival::Surv(survTimeCut, 1-cnsrCut) ~ group, data = dati.out[[j]])
           
           #convert to z value in correct direction: z>0 means better experimental arm.
           better = as.numeric(lr.test$obs[1] > lr.test$obs[2])
