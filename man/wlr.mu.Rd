@@ -20,7 +20,7 @@ wlr.mu(
   S1 = function(t) {
      exp(-log(2)/12 * 0.7 * t)
  },
-  cuts = c(6),
+  cuts = NULL,
   rho = 0,
   gamma = 0,
   tau = NULL,
@@ -56,7 +56,7 @@ usually the survival function is known in study design. The density function f0(
 but providing S1(t) can improves computational efficiency and
 usually the survival function is known in study design. The density function f1(t) = h1(t) * S1(t).}
 
-\item{cuts}{A vector of cut points to define piecewise distributions.
+\item{cuts}{A vector of cut points to define piecewise distributions. Default NULL.
 If cuts is not specified or incorrectly specified, it might occasionally have numerical integration issue.}
 
 \item{rho}{Parameter for Fleming-Harrington (rho, gamma) weighted log-rank test.}
@@ -102,25 +102,35 @@ S1.D6 = function(t){exp(-lam0*t)*as.numeric(t<delay) + c*exp(-HR*lam0*t)*as.nume
 Lambda = function(t){(t/18)^1.5*as.numeric(t <= 18) + as.numeric(t > 18)}
 drop0 = 0.03/12; drop1 = 0
 
-Delta = wlr.Delta(DCO = 24, r = 1, h0 = h0, S0 = S0, h1 = h1.D6, S1 = S1.D6, 
+#Delta
+Delta = nphRshiny:::wlr.Delta(DCO = 24, r = 1, h0 = h0, S0 = S0, h1 = h1.D6, S1 = S1.D6, 
 cuts=c(6), rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
 Lambda = Lambda, G0 = function(t){1-exp(-drop0 * t)}, G1 = function(t){0})
+Delta
 #-0.02315818
 
-sig2=wlr.sigma2(DCO = 24, r = 1, h0 = h0, S0 = S0,h1 = h1.D6,S1 = S1.D6, 
+#sigma^2
+sig2 = nphRshiny:::wlr.sigma2(DCO = 24, r = 1, h0 = h0, S0 = S0,h1 = h1.D6,S1 = S1.D6, 
 cuts=c(6), rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
 Lambda = Lambda, G0 = function(t){1-exp(-drop0 * t)}, G1 = function(t){0})
+sig2
+#0.1185331
 
 #sqrt(600)*Delta/sqrt(sig2)
+
+sqrt(600)*Delta/sqrt(sig2)
+#-1.647632
 
 wlr.mu(DCO = 24, r = 1, h0 = h0, S0 = S0,h1 = h1.D6,S1 = S1.D6, 
 cuts=c(6), rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
 Lambda = Lambda, G0 = function(t){1-exp(-drop0 * t)}, G1 = function(t){0},
 mu.method="H1")
+#1.647632
 
 wlr.mu(DCO = 24, r = 1, h0 = h0, S0 = S0,h1 = h1.D6,S1 = S1.D6, 
 cuts=c(6), rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
 Lambda = Lambda, G0 = function(t){1-exp(-drop0 * t)}, G1 = function(t){0},
 mu.method="Schoenfeld")
+#1.656127
 
 }

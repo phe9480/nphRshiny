@@ -19,7 +19,7 @@ wlr.Delta(
   S1 = function(t) {
      exp(-log(2)/12 * 0.7 * t)
  },
-  cuts = c(6),
+  cuts = NULL,
   rho = 0,
   gamma = 0,
   tau = NULL,
