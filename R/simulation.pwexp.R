@@ -67,7 +67,7 @@
 #' #HR = 0.65, enrollment 24 months, weight 1.5, no drop offs; 
 #' #IA and FA are performed at 400 and 500 events respectively.
 #' 
-#' sim.delay6 = simulation.pwexp(nSim=10, N = 600, A = 24, w=1.5, r=1, lam0=log(2)/12, lam1= c(log(2)/12,log(2)/12*0.65), cuts=6, drop0= 0, drop1= 0, targetEvents = c(400, 500))
+#' sim.delay6 = simulation.pwexp(nSim=10, N = 600, A = 24, w=1.5, r=1, lam0=log(2)/12, lam1= c(log(2)/12,log(2)/12*0.65), cuts0=NULL, cuts1=6, drop0= 0, drop1= 0, targetEvents = c(400, 500))
 #' km.IA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data=sim.delay6[[1]][sim==1,])
 #' plot(km.IA,xlab="Month Since Randomization",ylab="Survival",lty=1:2,xlim=c(0,36))
 #' km.FA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data= sim.delay6[[2]][sim==1,])
@@ -80,9 +80,8 @@
 #' #HR = 0.65, enrollment 24 months, weight 1.5, no drop offs; 
 #' #IA and FA are performed at 400 and 500 events respectively.
 #' 
-#' crossEffect = 0.8 #Hazard ratio in control arm (after crossover vs before crossover)
-#' lam0 = log(2)/12*c(1, 1, crossEffect); lam1 = log(2)/12*c(1, hr, hr)
-#' sim.delay6crs=simulation.pwexp(nSim=10,N=600,A=24,w=1.5,r=1,lam0=lam0, lam1=lam1,cuts=c(6, 24),drop0=0,drop1=0, targetEvents=c(400, 500))
+#' lam0 = log(2)/12*c(1, 1, 0.8); lam1 = log(2)/12*c(1, 0.65, 0.65)
+#' sim.delay6crs=simulation.pwexp(nSim=100,N=600,A=24,w=1.5,r=1,lam0=lam0, lam1=lam1,cuts0=c(6, 24),cuts1=c(6, 24),drop0=0,drop1=0, targetEvents=c(400, 500))
 #' km.IA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data=sim.delay6crs[[1]][sim==1,])
 #' plot(km.IA,xlab="Month Since Randomization",ylab="Survival",lty=1:2,xlim=c(0,36))
 #' km.FA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data= sim.delay6crs[[2]][sim==1,])
@@ -94,63 +93,6 @@ simulation.pwexp = function(nSim=100, N = 600, A = 21, w=1.5, Lambda = NULL,
                             cuts0=NULL, cuts1=NULL, drop0=0, drop1=0, 
                             targetEvents = c(400, 500), DCO = NULL) {
 
-  f.nEachMonth = function (N=600, A=24, w=2, r=2, Lambda=NULL) {
-    
-    N1 = round(N * (r/(r+1)))
-    N0 = N - N1
-    
-    #When r > 1, the control arm has smaller number of pts. 
-    #Just need to determine enrollment for control arm per month, 
-    #then to obtain enrollment for experimental arm by n1i = n0i * r.
-    
-    n1 = n0 = rep(NA, A) #enrollment by month
-    randdt1 = rep(NA, N1) #randomization date
-    randdt0 = rep(NA, N0)
-    
-    #Determine number of pts per month for control arm
-    #(i-1)th month cumulative enrolled pts
-    cLastN0 = 0
-    for (i in 1:A) {
-      #ith month: cumulative #pts
-      if (is.null(Lambda)){
-        cN0i = max(round((i/A)^w * N0), 1)
-      } else {
-        cN0i = max(round(Lambda(i/A) * N0), 1)
-      }
-      
-      n0[i] = max(cN0i - cLastN0, 1)
-      if (i == A) {n0[i] = N0 - sum(n0[1:(A-1)]) }
-      cLastN0 = cN0i  
-    }
-    n1 = n0 * r
-    
-    #Patch for extreme rare scenarios that 0 enrollment in the last month
-    if(n0[A] == 0 && n0[A-1] > 1){n0[A-1] = n0[A-1]-1; n0[A]=1}
-    if(n1[A] == 0 && n1[A-1] > 1){n1[A-1] = n1[A-1]-1; n1[A]=1}
-    
-    o = list()
-    o$n0 = n0
-    o$n1 = n1
-    return(o)
-  }
-  f.dataCut = function(data, targetEvents = 397, DCO = NULL) {
-    data0 = data
-    data0.order <- data0[order(data0$calendarTime), ] #order by calendar time
-    data.event <- data0.order[data0.order$cnsr == 0,] #Events Only
-    
-    data.event$event.seq <- seq.int(nrow(data.event)) #event sequence number
-    if(is.null(DCO)){
-      #Data cutoff in calendar time added to the original dataframe as a variable
-      data0$calendarCutoff = data.event$calendarTime[data.event$event.seq == targetEvents] 
-    } else {
-      data0$calendarCutoff = DCO
-    }
-    data0$survTimeCut = ifelse(data0$calendarTime <= data0$calendarCutoff, data0$survTime, data0$calendarCutoff-data0$enterTime)
-    data0$cnsrCut = ifelse(data0$calendarTime <= data0$calendarCutoff, data0$cnsr, 1)
-    
-    return(data0)
-  }
-  
   nEachMonth = f.nEachMonth(N=N, A=A, w=w, r=r, Lambda=Lambda)
   
   gamma = nEachMonth$n0 + nEachMonth$n1
@@ -170,26 +112,29 @@ simulation.pwexp = function(nSim=100, N = 600, A = 21, w=1.5, Lambda = NULL,
   }
   if (is.null(cuts0) && !is.null(cuts1)){
     intervals = rep(NA, length(cuts1)); intervals[1] = cuts1[1]
+    if (length(cuts1) > 1){
     for (i in 2:length(cuts1)){
       intervals[i] = cuts1[i] - cuts1[i-1]
-    }
+    }}
     lam0new = rep(lam0[1], length(cuts1))
     lam1new = lam1
   }
   if (!is.null(cuts0) && is.null(cuts1)){
     intervals = rep(NA, length(cuts0)); intervals[1] = cuts0[1]
+    if (length(cuts0) > 1){
     for (i in 2:length(cuts0)){
       intervals[i] = cuts0[i] - cuts0[i-1]
-    }
+    }}
     lam0new = lam0
     lam1new = rep(lam1[1], length(cuts0))
   }
   if (!is.null(cuts0) && !is.null(cuts1)){
     cuts = sort(unique(c(cuts0, cuts1)))
     intervals = rep(NA, length(cuts)); intervals[1] = cuts[1]
+    if (length(cuts) > 1){
     for (i in 2:length(cuts)){
       intervals[i] = cuts[i] - cuts[i-1]
-    }
+    }}
   
     lam0new = lam1new = rep(NA, (length(cuts)+1))
     for (i in 1:length(cuts)){
