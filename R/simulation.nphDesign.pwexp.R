@@ -177,7 +177,7 @@
 #' 
 #' @export 
 simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda=NULL, r=1, lam0=log(2)/12, lam1=log(2)/12*0.7, 
-    cuts=NULL, drop0=0, drop1=0, targetEvents = c(30, 60), 
+    cuts0=NULL, cuts1=NULL, drop0=0, drop1=0, targetEvents = c(30, 60), 
     sf = "LDOF", param = NULL, overall.alpha = 0.025, p1=NULL, cum.alpha=NULL, alpha = NULL,
     logrank="N", fws.options=list(fws5), H0 = "N", parallel=FALSE, n.cores=8, seed=2022, out.z = FALSE) {
 
