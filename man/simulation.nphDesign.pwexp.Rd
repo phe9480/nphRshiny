@@ -14,7 +14,8 @@ simulation.nphDesign.pwexp(
   r = 1,
   lam0 = log(2)/12,
   lam1 = log(2)/12 * 0.7,
-  cuts = NULL,
+  cuts0 = NULL,
+  cuts1 = NULL,
   drop0 = 0,
   drop1 = 0,
   targetEvents = c(30, 60),
@@ -42,7 +43,8 @@ simulation.nphDesign.pwexp(
   r = 1,
   lam0 = log(2)/12,
   lam1 = log(2)/12 * 0.7,
-  cuts = NULL,
+  cuts0 = NULL,
+  cuts1 = NULL,
   drop0 = 0,
   drop1 = 0,
   targetEvents = c(30, 60),
@@ -83,15 +85,6 @@ lam0 = log(2) / median;}
 
 \item{lam1}{Hazard rates for experimental arm for intervals; for exponential(lambda1) distribution,
 lam1 = log(2) / median; For delayed effect under H1, lambda1 is a vector (below).}
-
-\item{cuts}{Timepoints to form intervals for piecewise exponential distribution. For example,
-experimental arm has hr = 0.6 after delay, then cuts = 6, and
-lam0 = log(2) / m0 or lam0 = rep(log(2) / m0, 2),
-lam1 = c(log(2)/m0, log(2)/m0\emph{hr).
-treatment after 24 mo, so its hazard decreases 20\%. Then,
-lam0 = c(log(2)/m0, log(2)/m0, log(2)/m0}0.8),
-lam1 = c(log(2)/m0, log(2)/m0\emph{hr, log(2)/m0}hr), and
-cuts = c(6, 24), which forms 3 intervals (0, 6), (6, 24), (24, infinity)}
 
 \item{drop0}{Drop Off rate per month, eg, 1\%, for control arm}
 
@@ -156,6 +149,15 @@ where s is the survival rate S(t-).
 \item{seed}{seed for generating samples. Default 2022}
 
 \item{out.z}{Output test statistics, TRUE/FALSE}
+
+\item{cuts}{Timepoints to form intervals for piecewise exponential distribution. For example,
+experimental arm has hr = 0.6 after delay, then cuts = 6, and
+lam0 = log(2) / m0 or lam0 = rep(log(2) / m0, 2),
+lam1 = c(log(2)/m0, log(2)/m0\emph{hr).
+treatment after 24 mo, so its hazard decreases 20\%. Then,
+lam0 = c(log(2)/m0, log(2)/m0, log(2)/m0}0.8),
+lam1 = c(log(2)/m0, log(2)/m0\emph{hr, log(2)/m0}hr), and
+cuts = c(6, 24), which forms 3 intervals (0, 6), (6, 24), (24, infinity)}
 }
 \value{
 An object with a dataframe for each analysis including the following variables:

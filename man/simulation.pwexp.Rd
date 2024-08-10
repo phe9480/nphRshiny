@@ -106,7 +106,7 @@ plot(km.FA,xlab="Month Since Randomization",ylab="Survival",lty=1:2,xlim=c(0,50)
 #HR = 0.65, enrollment 24 months, weight 1.5, no drop offs; 
 #IA and FA are performed at 400 and 500 events respectively.
 
-sim.delay6 = simulation.pwexp(nSim=10, N = 600, A = 24, w=1.5, r=1, lam0=log(2)/12, lam1= c(log(2)/12,log(2)/12*0.65), cuts=6, drop0= 0, drop1= 0, targetEvents = c(400, 500))
+sim.delay6 = simulation.pwexp(nSim=10, N = 600, A = 24, w=1.5, r=1, lam0=log(2)/12, lam1= c(log(2)/12,log(2)/12*0.65), cuts0=NULL, cuts1=6, drop0= 0, drop1= 0, targetEvents = c(400, 500))
 km.IA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data=sim.delay6[[1]][sim==1,])
 plot(km.IA,xlab="Month Since Randomization",ylab="Survival",lty=1:2,xlim=c(0,36))
 km.FA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data= sim.delay6[[2]][sim==1,])
@@ -119,9 +119,8 @@ plot(km.FA,xlab="Month Since Randomization",ylab="Survival",lty=1:2,xlim=c(0,36)
 #HR = 0.65, enrollment 24 months, weight 1.5, no drop offs; 
 #IA and FA are performed at 400 and 500 events respectively.
 
-crossEffect = 0.8 #Hazard ratio in control arm (after crossover vs before crossover)
-lam0 = log(2)/12*c(1, 1, crossEffect); lam1 = log(2)/12*c(1, hr, hr)
-sim.delay6crs=simulation.pwexp(nSim=10,N=600,A=24,w=1.5,r=1,lam0=lam0, lam1=lam1,cuts=c(6, 24),drop0=0,drop1=0, targetEvents=c(400, 500))
+lam0 = log(2)/12*c(1, 1, 0.8); lam1 = log(2)/12*c(1, 0.65, 0.65)
+sim.delay6crs=simulation.pwexp(nSim=100,N=600,A=24,w=1.5,r=1,lam0=lam0, lam1=lam1,cuts0=c(6, 24),cuts1=c(6, 24),drop0=0,drop1=0, targetEvents=c(400, 500))
 km.IA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data=sim.delay6crs[[1]][sim==1,])
 plot(km.IA,xlab="Month Since Randomization",ylab="Survival",lty=1:2,xlim=c(0,36))
 km.FA<-survival::survfit(survival::Surv(survTimeCut,1-cnsrCut)~treatment,data= sim.delay6crs[[2]][sim==1,])

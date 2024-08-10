@@ -65,7 +65,7 @@ Lambda = function(t){t/24*as.numeric(t<= 24) + as.numeric(t>24)}. When Lambda is
 \item{dist0}{Type of distribution for control arm. The following options are available.
 (1) "exponential": lam0 required;
 (2) "weibull": shape0 and scale0 required;
-(3) "piecewise exponential": lamb0 and cuts0 required;
+(3) "piecewise exponential": lam0 and cuts0 required;
 (4) "mixture cure rate of exponential": p10 and lam0 required;
 (5) "mixture cure rate of weibull": p10, shape0, and scale0 required
 (6) "customized": S0 as a survival function is required.}
@@ -247,7 +247,7 @@ wlr.power.maxcombo(DCO = c(24, 36), overall.alpha=0.025, sf = "LDOF",
 #(c1) Type I error; also output logrank test simulation results
 H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, r = 1, 
 A = 21, w=1.5,
-lam0=lambda0, lam1=lambda0*0.7,
+lam0=lambda0, lam1=lambda0*0.7, cuts0=NULL, cuts1=NULL,
 targetEvents = e, drop0 = 0.03/12, drop1=0.03/12,
 overall.alpha = 0.025, sf = "LDOF",
 H0 = "Y", logrank="Y", fws.options=list(fws1))
@@ -255,7 +255,7 @@ H0 = "Y", logrank="Y", fws.options=list(fws1))
 #same as above; using F.entry function to replac A and w specifications.
 H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, r=1, 
 Lambda=F.entry, 
-lam0=lambda0, lam1=lambda0*0.7,
+lam0=lambda0, lam1=lambda0*0.7, cuts0=NULL, cuts1=NULL,
 targetEvents = e, drop0 = 0.03/12, drop1=0.03/12,
 overall.alpha = 0.025, sf = "LDOF",
 H0 = "Y", logrank="Y", fws.options=list(fws1))
