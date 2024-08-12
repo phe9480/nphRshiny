@@ -164,15 +164,15 @@ An object with a dataframe for each analysis including the following variables:
 \item{power}{Power for each analysis}
 \item{overall.power}{Overall power of the group sequential design}
 \item{wlr.simulations}{Simulation results for each simulated study data.
-An array with dimensions: nSim simulations X M testing strategies
-(fws.options) X K analyses X variables:
+An array with dimensions (nSim, M, K, 5): nSim simulations, M testing strategies
+(fws.options), K analyses, 5 variables below. For example, wlr.simulations\link{,1,2,} shows the 5 variables for simulations testing option 1 at analysis 2.
 \itemize{
 \item z value
 \item p value
 \item analysis
 \item rejection boundary
 \item testing result (1 = positive; 0 = negative)
-}}
+} z value: wlr.simulations\link{,1,2,1}; p value: wlr.simulations\link{,1,2,2}; analysis: wlr.simulations\link{,1,2,3}; rejection boundary: wlr.simulations\link{,1,2,4}; testing results: wlr.simulations\link{,1,2,5}}
 \item{lr.power}{Power for each analysis using log-rank test. Available if logrank ="Y"}
 \item{lr.overall.power}{Overall power of the group sequential design using logrank test}
 \item{lr.simulations}{Simulation results for each simulated study data using logrank test}
@@ -261,12 +261,12 @@ overall.alpha = 0.025, sf = "LDOF",
 H0 = "Y", logrank="Y", fws.options=list(fws1))
 
 #same as above using the general function
-simulation.nphDesign(nSim=5, n = 100, r=1, Lambda=F.entry, drop0=0.03/12, drop1=0.03/12, 
+o=simulation.nphDesign(nSim=5, n = 100, r=1, Lambda=F.entry, drop0=0.03/12, drop1=0.03/12, 
 dist0 = "exponential", lam0=lambda0, shape0 = NULL, scale0 = NULL, p10 = NULL, S0 = NULL, cuts0 = NULL,
-dist1 = "exponential", lam1=lambda0, shape1 = NULL, scale1 = NULL, p11 = NULL, S1 = NULL, cuts1=NULL, 
+dist1 = "exponential", lam1=lambda0, shape1 = NULL, scale1 = NULL, p11 = NULL, S1 = NULL, cuts1 = NULL, 
 targetEvents = e, sf = "LDOF", param = NULL, overall.alpha = 0.025, p1=NULL, cum.alpha=NULL,
 logrank="N", fws.options=list(fws1), 
-parallel=FALSE, n.cores=8, seed=2022, out.z = FALSE)
+parallel=FALSE, n.cores=8, seed=2022, out.z = TRUE)
 
 
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/qmcr.R
 \name{qmcr}
 \alias{qmcr}
-\title{Quantile Function for Mixture Cure Rate Distribution}
+\title{Quantile Function for Mixture Cure Rate Distribution With Delayed Effect}
 \usage{
 qmcr(
   pct,
@@ -39,18 +39,21 @@ S(t) = p + (1-p)S0(t), where S0(t) is a survival distribution
 for susceptible subject, i.e., S0(0)=1 and S0(t) -> 0 as t -> Infinity.
 S0(t) can be any proper survival function. For generality of S0(t), consider
 the generalized modified Weibull (GMW) distribution with parameters
-(alpha, beta, gamma, lambda) Martinez et al(2013).
-}
-\details{
+(alpha, beta, gamma, lambda) Martinez et al(2013). A delayed effect tau is also incorporated.
+The delayed effect will modify the survival function after tau corresponding to the hazard ratio.
+i.e. if psi = 0.6, and tau = 6 months, then after tau, the survival function is assumed having HR 0.6 compared to mcr(p, alpha, beta, gamma, lambda).
+This feature is convenient when modeling delayed effect on top of MCR.
+
 alpha: scale parameter
 beta and gamma: shape parameters
 lambda: acceleration parameter
-
+}
+\details{
 S0(t) = 1-(1-exp(-alpha\emph{t^gamma}exp(lambda*t)))^beta
 
 Special cases:
-(1) Weibull dist: lambda = 0, beta = 1. Beware of the parameterization difference.
-(2) Exponential dist: lambda = 0, beta = 1, gamma = 1. The shape parameter (hazard rate) is alpha.
+(1) Weibull dist: lambda = 0, beta = 1. For traditional weibull parameterization (shape, scale), then alpha = scale^(-shape), gamma = shape.
+(2) Exponential dist: lambda = 0, beta = 1, gamma = 1. The hazard rate = alpha = 1/scale; and gamma=shape=1.
 (3) Rayleigh dist: lambda = 0, beta = 1, gamma = 2.
 (4) Exponentiated Weibull dist (EW): lambda = 0
 (5) Exponentiated exponential dist (EE): lambda = 0 and gamma = 1
@@ -68,7 +71,8 @@ S(t) is MCR with additional cure rate parameter p;
 In reference to S(t), S1(t) is a delayed effect distribution and proportional hazards after delay.
 
 MCR(p, alpha, beta, gamma, lambda, tau, psi=1) reduces to S(t)
-MCR(p, alpha, beta, gamma, lambda, tau=0, psi) reduces to S(t)^psi, i.e. proportional hazards.
+MCR(p, alpha, beta, gamma, lambda, tau=0, psi=0.6) means a distribution having proportional hazard HR=0.6 compared to MCR(p, alpha, beta, gamma, lambda).
+MCR(p, alpha, beta, gamma, lambda, tau=6, psi=0.6) means a distribution having a delayed effect 6 months and afterwards proportional hazard HR=0.6 compared to MCR(p, alpha, beta, gamma, lambda).
 MCR(p=0, alpha, beta, gamma, lambda, tau=0, psi=1) reduces to S0(t)
 MCR(p=0, alpha, beta=1, gamma=1, lambda=0, tau=0, psi=1) reduces to exponential dist.
 }
