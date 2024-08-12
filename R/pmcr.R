@@ -17,8 +17,8 @@
 #' S0(t) = 1-(1-exp(-alpha*t^gamma*exp(lambda*t)))^beta
 #' 
 #' Special cases:
-#' (1) Weibull dist: lambda = 0, beta = 1. Beware of the parameterization difference.
-#' (2) Exponential dist: lambda = 0, beta = 1, gamma = 1. The shape parameter (hazard rate) is alpha.
+#' (1) Weibull dist: lambda = 0, beta = 1. For traditional weibull parameterization (shape, scale), then alpha = scale^(-shape), gamma = shape. 
+#' (2) Exponential dist: lambda = 0, beta = 1, gamma = 1. The hazard rate = alpha = 1/scale; and gamma=shape=1.
 #' (3) Rayleigh dist: lambda = 0, beta = 1, gamma = 2.
 #' (4) Exponentiated Weibull dist (EW): lambda = 0
 #' (5) Exponentiated exponential dist (EE): lambda = 0 and gamma = 1
@@ -85,9 +85,8 @@ pmcr = function(t, p=0.3, alpha = log(2)/12, beta=1, gamma=1, lambda=0, tau=0, p
   F0 = function(t){1 - S0(t)}
   Ft = (1-p)*F0(t)
   
-  if (t <= tau){ans = 1-S(t)} else{
-    ans = 1 - S(tau)^(1-psi)*S(t)^psi
-  }
+  f = 1-S(t); f2 = 1 - S(tau)^(1-psi)*S(t)^psi
+  ans = f*as.numeric(t <= tau) + f2*as.numeric(t > tau)
   
   return(ans)
 }
