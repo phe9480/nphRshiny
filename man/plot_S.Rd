@@ -7,9 +7,9 @@
 plot_S(
   S = list(S0, S1),
   Tmax = 50,
-  leg = list(x = 30, y = 1, txt = c("Control", "Exp. Arm")),
-  param = list(xlab = "Survival Time (mo)", ylab = "PFS", main =
-    "PFS Survival Curve Per Study Design")
+  leg = list(x = 30, y = 1, txt = c("Control Arm", "Experimental Arm")),
+  param = list(xlab = "Time Since First Subject Randomized (mo)", ylab = "Survival", main
+    = "Survival Curve Per Study Design")
 )
 }
 \arguments{
@@ -33,6 +33,6 @@ h0 = function(t){lambda0}; S0 = function(t){exp(-lambda0 * t)}
 lambda1 = lambda0 * HR
 h1 = function(t){lambda1}; S1= function(t){exp(-lambda1 * t)}
 
-plot_S(Tmax = 50, S = list(S0, S1), param=list(xlab="Time (mo)", ylab="PFS", main="PFS: HR = 0.65; Design Assumptions"))
+plot_S(Tmax = 50, S = list(S0, S1))
 
 }

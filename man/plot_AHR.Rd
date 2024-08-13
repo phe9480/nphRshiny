@@ -21,7 +21,7 @@ plot_AHR(
      exp(-log(2)/12 * 0.7 * t)
  },
   f.logHR = function(t) {
-     log(as.numeric(t < 6) + as.numeric(t >= 6) * 0.65)
+     0.7
  },
   rho = 0,
   gamma = 0,

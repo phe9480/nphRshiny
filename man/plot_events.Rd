@@ -29,7 +29,7 @@ plot_events(
   G1 = function(t) {
      1 - exp(-0.1/12 * t)
  },
-  leg = list(x = 0, y = n/2, txt = c("Control", "Exp. Arm", "Total")),
+  leg = list(x = 0, y = n/2, txt = c("Control Arm", "Experimental Arm", "Total")),
   param = list(xlab = "Time Since 1st Subject Randomized (mo)", ylab =
     "Cumulative Events", main = "")
 )
