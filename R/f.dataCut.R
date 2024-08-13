@@ -2,17 +2,43 @@
 #' 
 #' Determine the dataset for each analysis according to specified target event.
 #' 
-#' @param  data Input dataset
-#' @param  targetEvents A vector of targetEvents for planned analyses
-#' @param  DCO A vector of data cutoffs for planned analyses. Either targetEvents or DCO is required.
+#' @param  data Input dataset. Required variables: survTime, cnsr, enterTime, calendarTime
+#' @param  targetEvents targetEvents for planned analyses. For example, targetEvents = 200 means the analysis is planned at 200 total numbers of events from two arms.
+#' @param  DCO A data cutoff date for planned analysis. Either targetEvents or DCO is required. For example, DCO = 24 means the analyses are planned at 24 months since first subject randomized.
 #' 
-#' @return An object with the components:
-#' \describe{
-#' \item{[[1]]}{Dataset for First Analysis}
-#' \item{[[2]]}{Dataset for Second Analysis}
-#' \item{[[L]]}{Dataset for Lth Analysis}
-#' }
+#' @return A dataframe with variables including after cut: survTimeCut (survival time after cut) and cnsrCut (censor status after cut)
 #' 
+#' @examples
+#' # 300 subjects in a trial enrolled with ramping-up pattern with weight 1.5 in 24 months; 2:1 randomization
+#'   nEachMonth = f.nEachMonth(N=300, A=24, w=1.5, r=2)
+#'   gamma = nEachMonth$n0 + nEachMonth$n1
+#'   
+#'   #dropout rate: 3% in 12 months for both arms
+#'   eta0 = -log(1-0.03/12) #control
+#'   eta1 = -log(1-0.03/12) #experimental
+#'   
+#'   #control arm: median 12 months following exponential distribution
+#'   #experimental arm: median 18 months exponential distribution
+#'    o = nphsim::nphsim(nsim=1,lambdaC=log(2)/12,lambdaE=log(2)/18, ssC=100, ssE=200, intervals=NULL, gamma=gamma, R=rep(1, 24), eta=eta0, etaE=eta1,fixEnrollTime = FALSE)
+#'    dat = o$simd
+#'    data.out = NULL
+#'    
+#'    #1st simulated dataset from nphsim()
+#'    dataj = dat[dat$sim == 1,]
+#'    
+#'    #rename variables
+#'    dataj <- dplyr::rename(dataj, enterTime = enterT, calendarTime = ct, survTime= survival)
+#'    dataj$group = ifelse(dataj$treatment == "control", 0, 1)
+#'    
+#'    #cut data according to the specified target events 200, 250
+#'    data1 = f.dataCut(data=dataj, targetEvents=200)
+#'    data2 = f.dataCut(data=dataj, targetEvents=250)
+#'    
+#'    #Note: for piecewise exponential distribution, directly use the function simulation.pwexp() to generate data with planned cutoffs.
+#'    data12 = simulation.pwexp(nSim=1, N = 300, A = 24, w=1.5, r=2, lam0=log(2)/12, lam1= log(2)/18, drop0= 0.03/12, drop1= 0.03/12, targetEvents = c(200, 250))
+#'    
+#'    #Do not run. The IA and FA data are here: data1 = data12[[1]][sim == 1,]; data2 = data12[[2]][sim == 1,] 
+#'    
 #' @export 
 #' 
 f.dataCut = function(data, targetEvents = 397, DCO = NULL) {
