@@ -65,7 +65,7 @@ plot_events = function(n = 450, Tmax = 50, r=1,
                 Lambda = function(t){(t/18)^1.5*as.numeric(t <= 18) + as.numeric(t > 18)}, 
                 G0 = function(t){1-exp(-0.03/12*t)}, 
                 G1 = function(t){1-exp(-0.10/12*t)}, 
-                leg=list(x=0, y=n/2,txt=c("Control", "Exp. Arm", "Total")), 
+                leg=list(x=0, y=n/2,txt=c("Control Arm", "Experimental Arm", "Total")), 
                 param=list(xlab = "Time Since 1st Subject Randomized (mo)", 
                          ylab = "Cumulative Events",
                          main = "")){
@@ -78,15 +78,16 @@ plot_events = function(n = 450, Tmax = 50, r=1,
     nE[i, 2] = o$e1
     nE[i, 3] = o$e
   }
-
-  plot(t, nE[, 3], type = "n", xlab=param$xlab, ylab=param$ylab, main=param$main) 
-  lines(t, nE[, 1], lty = 1, col=1, lwd=3)
-  lines(t, nE[, 2], lty = 2, col=2, lwd=3)
-  lines(t, nE[, 3], lty = 3, col=3, lwd=3)
+  col.seq = c("seagreen3","blue3","orange3","deeppink3","turquoise4")
+  
+  plot(t, nE[, 3], type = "n", bty = "l", xlab=param$xlab, ylab=param$ylab, main=param$main) 
+  lines(t, nE[, 1], col=col.seq[1], lwd=5)
+  lines(t, nE[, 2], col=col.seq[2], lwd=5)
+  lines(t, nE[, 3], col=col.seq[3], lwd=5)
   abline(h = seq(0, max(nE), 25), col="gray80", lty=3)
   abline(v=seq(0, Tmax, by=2), col="gray80", lty=3)
   
-  legend(0, max(nE[, 3]), leg$txt, col=1:3, lty=1:3, bty="n", cex=0.8)
+  legend(0, max(nE[, 3]), leg$txt, col=col.seq[1:3], lwd=rep(5,3), lty=rep(1,3), bty="n", cex=0.8)
   
   e0 = nE[, 1];   e1 = nE[, 2];   e = nE[, 3]
   return(data.frame(cbind(t, e0, e1, e)))

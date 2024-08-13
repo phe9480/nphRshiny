@@ -93,12 +93,14 @@
 plot_AHR = function(n = 450, Tmax = 50, r = 1,  
                    h0 = function(t){log(2)/12}, S0= function(t){exp(-log(2)/12 * t)},
                    h1 = function(t){log(2)/12*0.70}, S1= function(t){exp(-log(2)/12 * 0.7 * t)}, 
-                   f.logHR = function(t){log(as.numeric(t<6) + as.numeric(t>= 6)*0.65)},
+                   f.logHR = function(t){0.7},
                    rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
                    Lambda = function(t){(t/18)*as.numeric(t <= 18) + as.numeric(t > 18)}, 
                    G = function(t){0}, method="Geometric Schoenfeld", ...){
   
   t = seq(0, Tmax, by = 1); ahr = rep(NA, length(t))
+  col.seq = c("seagreen3","blue3","turquoise4","deeppink3","orange")
+  
   for (i in 1:length(t)){
     ahr.i=wlr.AHR(DCO=t[i], r=r, n = n, h0=h0, S0=S0, h1=h1, S1 = S1, f.logHR = f.logHR,
                   rho=rho, gamma=gamma, tau=tau, s.tau=s.tau, f.ws=f.ws,
@@ -109,8 +111,9 @@ plot_AHR = function(n = 450, Tmax = 50, r = 1,
     if (method == "Kalbfleisch and Prentice") {ahr[i] = ahr.i$AHR.KP}
   }
   ahr = round(ahr, 3)
-  plot(t, ahr, type="n", xlab="Time Since 1st Subject Randomized (mo)", ylab="Expected Average Hazard Ratio", ...)
-  lines(t, ahr, lwd=3, col=1, lty=1)
+  plot(t, ahr, type="n", bty = "l", xlab="Time Since 1st Subject Randomized (mo)", 
+       ylab="Expected Average Hazard Ratio", ...)
+  lines(t, ahr, lwd=3, col=col.seq[1], lty=1)
   abline(h = seq(0, 1, 0.05), col="gray80", lty=3)
   abline(v=seq(0, Tmax, by=2), col="gray80", lty=3)
   return(ahr)
