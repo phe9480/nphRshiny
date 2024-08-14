@@ -99,6 +99,7 @@
 #'      h1 = function(t){0.03}, S1=function(t){exp(-0.03*t)}, 
 #'      rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
 #'      Lambda = Lambda, G = G, method="Kalbfleisch and Prentice")
+#'      
 #' @export
 #' 
 plot_AHR = function(n = 450, Tmax = 50, r = 1,  
