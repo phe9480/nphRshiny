@@ -155,7 +155,7 @@ m0 = 12; #median OS for control arm
 lambda0 = log(2) / m0
 h0 = function(t){lambda0}; 
 S0 = function(t){exp(-lambda0 * t)}
-HRd = 0.60 #hazard ratio after delay
+HRd = 0.50 #hazard ratio after delay
 
 h.D3=function(t){lambda0*as.numeric(t<3)+HRd*lambda0*as.numeric(t>=3)}
 c3 = exp(-3*lambda0*(1-HRd)); 
@@ -186,6 +186,15 @@ wlr.power.maxcombo(DCO = c(24, 36),
   Lambda=Lambda, G0=G0, G1=G1,
   mu.method = "Schoenfeld", cov.method = "H0")
   
+wlr.power.maxcombo(DCO = 30,  
+  alpha=0.025, 
+  overall.alpha=NULL, sf = NULL, param=NULL, p1=NULL, cum.alpha=NULL, 
+  r = 1, n = 500, 
+  h0 = h0, S0=S0,h1 = function(t){log(2)/12*0.7}, S1= function(t){exp(-log(2)/12*0.7*t)}, 
+  f.ws = list(FA=list(lr)), 
+  Lambda=Lambda, G0=G0, G1=G1,
+  mu.method = "Schoenfeld", cov.method = "H1")
+     
  #(b) LD OBF spending method
  wlr.power.maxcombo(DCO = c(24, 36),  
   alpha=NULL,
