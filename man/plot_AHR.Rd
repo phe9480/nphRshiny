@@ -150,4 +150,5 @@ ahr5=plot_AHR(n = 450, Tmax = 30, r = 1, h0 = function(t){0.005*t}, S0=function(
      h1 = function(t){0.03}, S1=function(t){exp(-0.03*t)}, 
      rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
      Lambda = Lambda, G = G, method="Kalbfleisch and Prentice")
+     
 }

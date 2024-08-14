@@ -20,9 +20,6 @@ wlr.AHR(
   S1 = function(t) {
      exp(-log(2)/12 * 0.7 * t)
  },
-  f.logHR = function(t) {
-     log(as.numeric(t < 6) + as.numeric(t >= 6) * 0.65)
- },
   rho = 0,
   gamma = 0,
   tau = NULL,
@@ -138,20 +135,19 @@ log-rank score statistic.
 HR = 0.65; delay = 6; lambda0 = log(2) / 12; 
 h0 = function(t){lambda0}; S0 = function(t){exp(-lambda0 * t)}
 lambda1 = lambda0 * HR
-f.logHR.PH = function(t){log(HR)}
 h1.PH = function(t){lambda1}; S1.PH= function(t){exp(-lambda1 * t)}
 Lambda = function(t){(t/18)^1.5*as.numeric(t <= 18) + as.numeric(t > 18)}
 rho = 0; gamma = 0; tau = NULL; s.tau = 0; f.ws = NULL; G = function(t){0}
 DCO = 24; r = 1; n = 450
 
 wlr.AHR(DCO = 24, r = 1, n = 450, h0 = h0, S0=S0,
-     h1 = h1.PH, S1=S1.PH, f.logHR = f.logHR.PH,
+     h1 = h1.PH, S1=S1.PH, 
      rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
      Lambda = Lambda, G = G)
      
 #If proportional hazards, then the average HR is independent of any weight functions       
 wlr.AHR(DCO = 24, r = 1, n = 450, h0 = h0, S0=S0,
-     h1 = h1.PH, S1=S1.PH, f.logHR = f.logHR.PH,
+     h1 = h1.PH, S1=S1.PH, 
      rho = 0, gamma = 1, tau = NULL, s.tau = 0, f.ws = NULL,
      Lambda = Lambda, G = G)
      
@@ -167,17 +163,16 @@ h0 = function(t){lambda0}; S0 = function(t){exp(-lambda0 * t)}
 h1.D6 = function(t){lambda0*as.numeric(t < delay)+HR*lambda0*as.numeric(t >= delay)}
 c = exp(-delay*lambda0*(1-HR)); 
 S1.D6 = function(t){exp(-lambda0*t)*as.numeric(t<delay) + c*exp(-HR*lambda0*t)*as.numeric(t>=delay)}
-f.logHR.D6 = function(t){log(as.numeric(t<6) + as.numeric(t>= 6)*HR)}
 Lambda = function(t){(t/18)^1.5*as.numeric(t <= 18) + as.numeric(t > 18)}
 G = function(t){0}
 
 wlr.AHR(DCO = 24, r = 1, n = 450, h0 = h0, S0=S0,
-     h1 = h1.D6, S1=S1.D6, f.logHR = f.logHR.D6,
+     h1 = h1.D6, S1=S1.D6, 
      rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
      Lambda = Lambda, G = G)
      
 wlr.AHR(DCO = 24, r = 1, n = 450, h0 = h0, S0=S0,
-     h1 = h1.D6, S1=S1.D6, f.logHR = f.logHR.D6,
+     h1 = h1.D6, S1=S1.D6, 
      rho = 0, gamma = 1, tau = NULL, s.tau = 0, f.ws = NULL,
      Lambda = Lambda, G = G)
      
@@ -185,23 +180,23 @@ wlr.AHR(DCO = 24, r = 1, n = 450, h0 = h0, S0=S0,
 #Example (3). 
 #############
 #Draw a plot of average weighted HR over time    
-plot.AHR = function(f.logHR = f.logHR.PH, h0=h0, S0=S0, h1=h1, S1=S1, s.tau=0.5){
+plot.AHR = function(h0=h0, S0=S0, h1=h1, S1=S1, s.tau=0.5){
   maxT = 48; AHR.lr = AHR.fh = AHR.fh11 = AHR.sfh = rep(NA, maxT)
   for(i in 1:maxT){
     AHR.lr[i] = wlr.AHR(DCO = i, r = 1, n = 450, h0 = h0, S0=S0,
-       h1 = h1, S1=S1, f.logHR = f.logHR,
+       h1 = h1, S1=S1, 
        rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
        Lambda = Lambda, G = G)$AHR
     AHR.fh[i] = wlr.AHR(DCO = i, r = 1, n = 450, h0 = h0, S0=S0,
-       h1 = h1, S1=S1, f.logHR = f.logHR,
+       h1 = h1, S1=S1, 
        rho = 0, gamma = 1, tau = NULL, s.tau = 0, f.ws = NULL,
        Lambda = Lambda, G = G)$AHR      
     AHR.sfh[i] = wlr.AHR(DCO = i, r = 1, n = 450, h0 = h0, S0=S0,
-       h1 = h1, S1=S1, f.logHR = f.logHR,
+       h1 = h1, S1=S1,
        rho = 0, gamma = 1, tau = NULL, s.tau = s.tau, f.ws = NULL,
        Lambda = Lambda, G = G)$AHR    
     AHR.fh11[i] = wlr.AHR(DCO = i, r = 1, n = 450, h0 = h0, S0=S0,
-       h1 = h1, S1=S1, f.logHR = f.logHR,
+       h1 = h1, S1=S1, 
        rho = 1, gamma = 1, tau = NULL, s.tau = 0, f.ws = NULL,
        Lambda = Lambda, G = G)$AHR          
   }
@@ -221,25 +216,23 @@ plot.AHR = function(f.logHR = f.logHR.PH, h0=h0, S0=S0, h1=h1, S1=S1, s.tau=0.5)
 
 #(a)Proportional Hazards
 #########################
-plot.AHR(f.logHR = f.logHR.PH, h0=h0, S0=S0, h1=h1.PH, S1=S1.PH)
+plot.AHR(h0=h0, S0=S0, h1=h1.PH, S1=S1.PH)
 
 #(b)Delayed effect of 6 months
 #########################
-plot.AHR(f.logHR = f.logHR.D6, h0=h0, S0=S0, h1=h1.D6, S1=S1.D6, s.tau=0.5)
+plot.AHR(h0=h0, S0=S0, h1=h1.D6, S1=S1.D6, s.tau=0.5)
 
 #(c)Crossover to effective subsequent IO therapy and delay 6 months
 #########################
-crossDCO = 24; HRx = 0.9; #after crossover, assuming the tail piecewise HR = 0.9.
+crossT = 24; HRx = 0.9; #after crossover, assuming the tail piecewise HR = 0.9.
 h0x = function(t){lambda0*as.numeric(t < crossT) + HR/HRx*lambda0*as.numeric(t >= crossT)}; 
 c0 = exp(-crossT*lambda0*(1-HR/HRx)); 
 S0x = function(t){exp(-lambda0*t)*as.numeric(t<crossT) + c0*exp(-HR/HRx*lambda0*t)*as.numeric(t>=crossT)}
 h1.D6x = function(t){lambda0*as.numeric(t < delay) + HR*lambda0*as.numeric(t >= delay)}
 c1 = exp(-delay*lambda0*(1-HR)); 
 S1.D6x = function(t){exp(-lambda0*t)*as.numeric(t<delay) + c1*exp(-HR*lambda0*t)*as.numeric(t>=delay)}
-f.logHR.D6x = function(t){log(as.numeric(t < delay) 
-+ as.numeric(t >= delay & t < crossT)*HR + as.numeric(t >= crossT)*HRx)}
 
-plot.AHR(f.logHR = f.logHR.D6x, h0=h0x, S0=S0x, h1=h1.D6x, S1=S1.D6x, s.tau=0.5)
+plot.AHR(h0=h0x, S0=S0x, h1=h1.D6x, S1=S1.D6x, s.tau=0.5)
 
 #############
 #Example (4)
@@ -256,11 +249,11 @@ for (i in 1:L){
   f.logHR.D6 = function(t){log(as.numeric(t<6) + as.numeric(t>= 6)*HR)}
   
   lr = wlr.AHR(DCO = 48, r = 1, n = 450, h0 = h0, S0=S0,
-       h1 = h1.D6, S1=S1.D6, f.logHR = f.logHR.D6,
+       h1 = h1.D6, S1=S1.D6, 
        rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
        Lambda = Lambda, G = G)
   fh = wlr.AHR(DCO = 48, r = 1, n = 450, h0 = h0, S0=S0,
-       h1 = h1.D6, S1=S1.D6, f.logHR = f.logHR.D6,
+       h1 = h1.D6, S1=S1.D6, 
        rho = 0, gamma = 1, tau = NULL, s.tau = 0, f.ws = NULL,
        Lambda = Lambda, G = G)
   AHR.lr[i] = lr$AHR; AHR.KP.lr[i] = lr$AHR.KP
@@ -289,11 +282,11 @@ for (i in 1:L){
   S1.PH= function(t){exp(-lambda1 * t)}
   
   lr = wlr.AHR(DCO = 48, r = 1, n = 450, h0 = h0, S0=S0,
-       h1 = h1.PH, S1=S1.PH, f.logHR = f.logHR.PH,
+       h1 = h1.PH, S1=S1.PH, 
        rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
        Lambda = Lambda, G = G)
   fh = wlr.AHR(DCO = 48, r = 1, n = 450, h0 = h0, S0=S0,
-       h1 = h1.PH, S1=S1.PH, f.logHR = f.logHR.PH,
+       h1 = h1.PH, S1=S1.PH, 
        rho = 0, gamma = 1, tau = NULL, s.tau = 0, f.ws = NULL,
        Lambda = Lambda, G = G)
   AHR.lr[i] = lr$AHR; AHR.KP.lr[i] = lr$AHR.KP
@@ -312,8 +305,6 @@ for (i in 1:L){
 
 ####################
 #Example (6)
-#Comparison of KP method and (He et al) method 
-#Crossover to subsequent therapy
 ####################
 HRseq = seq(0.1, 0.9, by=0.01); L = length(HRseq)
 AHR.lr = AHR.KP.lr = AHR.fh = AHR.KP.fh = rep(NA, L)
@@ -327,14 +318,12 @@ for (i in 1:L){
   h1.D6x = function(t){lambda0*as.numeric(t < delay) + HR*lambda0*as.numeric(t >= delay)}
   c1 = exp(-delay*lambda0*(1-HR)); 
   S1.D6x = function(t){exp(-lambda0*t)*as.numeric(t<delay) + c1*exp(-HR*lambda0*t)*as.numeric(t>=delay)}
-  f.logHR.D6x = function(t){log(as.numeric(t < delay) 
-    + as.numeric(t >= delay & t < crossT)*HR + as.numeric(t >= crossT)*HRx)}
   lr = wlr.AHR(DCO = 48, r = 1, n = 450, h0 = h0x, S0=S0x,
-       h1 = h1.D6x, S1=S1.D6x, f.logHR = f.logHR.D6x,
+       h1 = h1.D6x, S1=S1.D6x, 
        rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
        Lambda = Lambda, G = G)
   fh = wlr.AHR(DCO = 48, r = 1, n = 450, h0 = h0x, S0=S0x,
-       h1 = h1.D6x, S1=S1.D6x, f.logHR = f.logHR.D6x,
+       h1 = h1.D6x, S1=S1.D6x,
        rho = 0, gamma = 1, tau = NULL, s.tau = 0, f.ws = NULL,
        Lambda = Lambda, G = G)
   AHR.lr[i] = lr$AHR; AHR.KP.lr[i] = lr$AHR.KP
