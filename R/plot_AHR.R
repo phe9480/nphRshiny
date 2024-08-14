@@ -77,22 +77,28 @@
 #' ahr1=plot_AHR(n = 450, Tmax = 50, r = 1, h0 = h0, S0=S0,
 #'      h1 = h1.D6, S1=S1.D6, 
 #'      rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
-#'      Lambda = Lambda, G = G, ylim=c(0.6, 1), method="Kalbfleisch and Prentice")
+#'      Lambda = Lambda, G = G, method="Kalbfleisch and Prentice")
 #' 
 #' ahr2=plot_AHR(n = 450, Tmax = 50, r = 1, h0 = h0, S0=S0,
 #'      h1 = h1.D6, S1=S1.D6, 
 #'      rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
-#'      Lambda = Lambda, G = G, ylim=c(0.6, 1), method="Geometric")
+#'      Lambda = Lambda, G = G, method="Geometric")
 #'      
 #' ahr3=plot_AHR(n = 450, Tmax = 50, r = 1, h0 = h0, S0=S0,
 #'      h1 = h1.D6, S1=S1.D6, 
 #'      rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
-#'      Lambda = Lambda, G = G, ylim=c(0.6, 1), method="Geometric Schoenfeld")
+#'      Lambda = Lambda, G = G, method="Geometric Schoenfeld")
 #' 
 #' ahr4=plot_AHR(n = 450, Tmax = 50, r = 1, h0 = h0, S0=S0,
 #'      h1 = h1.D6, S1=S1.D6, 
 #'      rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = function(s){1/s},
-#'      Lambda = Lambda, G = G, ylim=c(0.6, 1), method="Kalbfleisch and Prentice")
+#'      Lambda = Lambda, G = G, method="Kalbfleisch and Prentice")
+#'      
+#' #control: Weibull (shape = 2, scale = 20); experimental arm: exp(rate = 0.03)
+#' ahr5=plot_AHR(n = 450, Tmax = 30, r = 1, h0 = function(t){0.005*t}, S0=function(t){exp(-(t/20)^2)},
+#'      h1 = function(t){0.03}, S1=function(t){exp(-0.03*t)}, 
+#'      rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
+#'      Lambda = Lambda, G = G, method="Kalbfleisch and Prentice")
 #' @export
 #' 
 plot_AHR = function(n = 450, Tmax = 50, r = 1,  
@@ -102,12 +108,13 @@ plot_AHR = function(n = 450, Tmax = 50, r = 1,
                    Lambda = function(t){(t/18)*as.numeric(t <= 18) + as.numeric(t > 18)}, 
                    G = function(t){0}, method="Geometric Schoenfeld", ...){
   
-  t = seq(0, Tmax, by = 1); ahr = rep(NA, length(t))
+  t = seq(1, Tmax, by = 1); ahr = rep(NA, length(t))
   col.seq = c("seagreen3","blue3","turquoise4","deeppink3","orange")
   
   f.logHR = function(u){log(h1(u)/h0(u))}
   
   for (i in 1:length(t)){
+    #print(i)
     ahr.i=wlr.AHR(DCO=t[i], r=r, n = n, h0=h0, S0=S0, h1=h1, S1 = S1, f.logHR = f.logHR,
                   rho=rho, gamma=gamma, tau=tau, s.tau=s.tau, f.ws=f.ws,
                   Lambda = Lambda, G = G)

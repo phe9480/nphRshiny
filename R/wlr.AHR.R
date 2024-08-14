@@ -341,7 +341,8 @@ wlr.AHR = function(DCO = 24, r = 1, n = 450,
   #eta: weighted average of HR(t) by prob. of event
   I.eta = function(t){
     w = f.w(t, f.S = S.bar, f.ws=f.ws, tau=tau, s.tau=s.tau, rho=rho, gamma=gamma)
-    return(w * f.logHR(t)*Lambda(DCO-t) * (1 - G(t)) * f.bar(t))
+    #return(w * f.logHR(t)*Lambda(DCO-t) * (1 - G(t)) * f.bar(t))
+    return(w * (log(h1(t))-log(h0(t)))*Lambda(DCO-t) * (1 - G(t)) * f.bar(t))
   }
   eta = integrate(I.eta, lower=0, upper=DCO, abs.tol=1e-8)$value
   
