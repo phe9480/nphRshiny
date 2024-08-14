@@ -112,11 +112,9 @@ plot_AHR = function(n = 450, Tmax = 50, r = 1,
   t = seq(1, Tmax, by = 1); ahr = rep(NA, length(t))
   col.seq = c("seagreen3","blue3","turquoise4","deeppink3","orange")
   
-  f.logHR = function(u){log(h1(u)/h0(u))}
-  
   for (i in 1:length(t)){
     #print(i)
-    ahr.i=wlr.AHR(DCO=t[i], r=r, n = n, h0=h0, S0=S0, h1=h1, S1 = S1, f.logHR = f.logHR,
+    ahr.i=wlr.AHR(DCO=t[i], r=r, n = n, h0=h0, S0=S0, h1=h1, S1 = S1, 
                   rho=rho, gamma=gamma, tau=tau, s.tau=s.tau, f.ws=f.ws,
                   Lambda = Lambda, G = G)
     
