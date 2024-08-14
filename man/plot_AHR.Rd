@@ -128,20 +128,26 @@ G = function(t){0}
 ahr1=plot_AHR(n = 450, Tmax = 50, r = 1, h0 = h0, S0=S0,
      h1 = h1.D6, S1=S1.D6, 
      rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
-     Lambda = Lambda, G = G, ylim=c(0.6, 1), method="Kalbfleisch and Prentice")
+     Lambda = Lambda, G = G, method="Kalbfleisch and Prentice")
 
 ahr2=plot_AHR(n = 450, Tmax = 50, r = 1, h0 = h0, S0=S0,
      h1 = h1.D6, S1=S1.D6, 
      rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
-     Lambda = Lambda, G = G, ylim=c(0.6, 1), method="Geometric")
+     Lambda = Lambda, G = G, method="Geometric")
      
 ahr3=plot_AHR(n = 450, Tmax = 50, r = 1, h0 = h0, S0=S0,
      h1 = h1.D6, S1=S1.D6, 
      rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
-     Lambda = Lambda, G = G, ylim=c(0.6, 1), method="Geometric Schoenfeld")
+     Lambda = Lambda, G = G, method="Geometric Schoenfeld")
 
 ahr4=plot_AHR(n = 450, Tmax = 50, r = 1, h0 = h0, S0=S0,
      h1 = h1.D6, S1=S1.D6, 
      rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = function(s){1/s},
-     Lambda = Lambda, G = G, ylim=c(0.6, 1), method="Kalbfleisch and Prentice")
+     Lambda = Lambda, G = G, method="Kalbfleisch and Prentice")
+     
+#control: Weibull (shape = 2, scale = 20); experimental arm: exp(rate = 0.03)
+ahr5=plot_AHR(n = 450, Tmax = 30, r = 1, h0 = function(t){0.005*t}, S0=function(t){exp(-(t/20)^2)},
+     h1 = function(t){0.03}, S1=function(t){exp(-0.03*t)}, 
+     rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
+     Lambda = Lambda, G = G, method="Kalbfleisch and Prentice")
 }
