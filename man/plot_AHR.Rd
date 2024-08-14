@@ -20,9 +20,6 @@ plot_AHR(
   S1 = function(t) {
      exp(-log(2)/12 * 0.7 * t)
  },
-  f.logHR = function(t) {
-     0.7
- },
   rho = 0,
   gamma = 0,
   tau = NULL,
@@ -79,8 +76,9 @@ Lambda(t) = (t/A) where A is the enrollment period, i.e., Lambda(t) = t/A for 0<
 Lambda(t) = 1 when t > A. For more general non-uniform enrollment with weight psi,
 Lambda(t) = (t/A)^psi*I(0<=t<=A) + I(t>A). Default Lambda is uniform distribution function.}
 
-\item{G}{Distribution function of lost-to-follow-up censoring process. Default G = 0 (no lost-to-followup).
-For 3 percent of drop off every 12 months, assuming exponential distribution (ie constant hazard), then G(t) = 1 - exp(-0.03/12*t).}
+\item{G}{Cumulative distribution function of drop-off.
+For example, 3 percent drop-off in 12 months of followup means then the hazard rate for unit time
+is eta = -log(1-0.03/12), so G=function(t){1-exp(-eta*t)}. If control and experimental arms have separate dropouts, then create G(t)=(1-r)\emph{G0(t)+r}G1(t)}
 
 \item{method}{Methods to calculate the AHR: Options include "Geometric Schoenfeld", "Geometric",
 and "Kalbfleisch and Prentice". Default is "Geometric Schoenfeld".}
@@ -128,18 +126,22 @@ Lambda = function(t){(t/18)^1.5*as.numeric(t <= 18) + as.numeric(t > 18)}
 G = function(t){0}
 
 ahr1=plot_AHR(n = 450, Tmax = 50, r = 1, h0 = h0, S0=S0,
-     h1 = h1.D6, S1=S1.D6, f.logHR = f.logHR.D6,
+     h1 = h1.D6, S1=S1.D6, 
      rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
      Lambda = Lambda, G = G, ylim=c(0.6, 1), method="Kalbfleisch and Prentice")
 
 ahr2=plot_AHR(n = 450, Tmax = 50, r = 1, h0 = h0, S0=S0,
-     h1 = h1.D6, S1=S1.D6, f.logHR = f.logHR.D6,
+     h1 = h1.D6, S1=S1.D6, 
      rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
      Lambda = Lambda, G = G, ylim=c(0.6, 1), method="Geometric")
      
 ahr3=plot_AHR(n = 450, Tmax = 50, r = 1, h0 = h0, S0=S0,
-     h1 = h1.D6, S1=S1.D6, f.logHR = f.logHR.D6,
+     h1 = h1.D6, S1=S1.D6, 
      rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
      Lambda = Lambda, G = G, ylim=c(0.6, 1), method="Geometric Schoenfeld")
 
+ahr4=plot_AHR(n = 450, Tmax = 50, r = 1, h0 = h0, S0=S0,
+     h1 = h1.D6, S1=S1.D6, 
+     rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = function(s){1/s},
+     Lambda = Lambda, G = G, ylim=c(0.6, 1), method="Kalbfleisch and Prentice")
 }
