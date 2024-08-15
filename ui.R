@@ -1,18 +1,14 @@
-#
-# This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
+
 
 library(shiny)
 library(DT)
 library(nphRshiny)
 library(tidyverse)
+library(mvtnorm)
+
  
-shinyUI(navbarPage(title = 'Demo',
+shinyUI(navbarPage(title = tags$div(tags$img(src="logo.png", height="30px"), 
+                                     "TrialNexus"),
                    tabPanel('Design',
                             h3('Here is the test example for design part'),
                         
@@ -44,7 +40,7 @@ shinyUI(navbarPage(title = 'Demo',
                                        fluidRow(
                                          column(6,
                                                 radioButtons("testFunControl", "Choose a function for Control",
-                                                             choices = list("Piecewise exponential" = "B","Weibull" = "C","Mixture cure rate of exponential"="D",
+                                                             choices = list("Exponential"="F","Piecewise exponential" = "B","Weibull" = "C","Mixture cure rate of exponential"="D",
                                                                             "Mixture cure rate of weibull"='E',"Customized distribution" = "A")),
                                                 uiOutput("inFunControl"),
                                                 conditionalPanel(
@@ -52,22 +48,42 @@ shinyUI(navbarPage(title = 'Demo',
                                                   uiOutput("moreInputsControl")
                                                 )),
                                          column(6,
-                                                radioButtons("testFunExperiment", "Choose a function for Experiment",
-                                                             choices = list("Piecewise exponential" = "B","Weibull" = "C","Mixture cure rate of exponential"="D",
-                                                                            "Mixture cure rate of weibull"='E',"Customized distribution" = "A")),
-                                                uiOutput("inFunExperiment"),
+                                                radioButtons("distEXP", "Choose a method",choices = list("Proportional Hazards"="A","General"="B")),
                                                 conditionalPanel(
-                                                  condition = "input.testFunExperiment === 'B'",
-                                                  uiOutput("moreInputsExperiment")
-                                                ))
+                                                  condition = "input.distEXP === 'A'",
+                                                  textInput("ratioExp","Hazard ratio")
+                                                ),
+                                                conditionalPanel(
+                                                  condition = "input.distEXP === 'B'",
+                                                  radioButtons("testFunExperiment", "Choose a function for Experiment",
+                                                               choices = list("Exponential"="F","Piecewise exponential" = "B","Weibull" = "C","Mixture cure rate of exponential"="D",
+                                                                              "Mixture cure rate of weibull"='E',"Customized distribution" = "A")),
+                                                  uiOutput("inFunExperiment"),
+                                                  conditionalPanel(
+                                                    condition = "input.testFunExperiment === 'B'",
+                                                    uiOutput("moreInputsExperiment")
+                                                  ),
+                                                  conditionalPanel(
+                                                    condition = "input.testFunExperiment === 'F'",
+                                                    uiOutput("medExpOut")
+                                                  )
+                                                )
+                                                )
                                        ),
                                        h6("To customize function: Example 1: if follows an exponential distribution with a median of 12 months, then the survival function is exp(-log(2)/12 * t).
                                            Example 2: if follows a piecewise exponential function with hazards log(2)/12 before 6 months and log(2)/24 after 6 months, which is log(2)/12*as.numeric(t<=6) + log(2)/24*as.numeric(t>6).
                                           The survival function is exp(-log(2)/12*t)*as.numeric(t <= 6) + exp(-log(2)/12 * 6 - log(2)/24 * t + log(2)/24 *6)*as.numeric(t>6)"),
                                        
                                        verbatimTextOutput("funcDef0"),
-                                       actionButton("plotBtn0", "Display Survival Curves"),
-                                       plotOutput("sur")
+                                       fluidRow(
+                                         column(6,
+                                                actionButton("plotBtn0", "Display Survival Curves"),
+                                                plotOutput("sur")),
+                                         column(6,
+                                                actionButton("plotBtn", "Display Hazard Curves"),
+                                                plotOutput("hz"))
+                                       )
+                                       
                                        
                               ),
                
@@ -90,8 +106,8 @@ shinyUI(navbarPage(title = 'Demo',
                                                 column(6,
                                                        h4('Dropout Rate'),
                                                        h6("* For example, 3% dropoff in 12 months, input 0.03"),
-                                                       textInput('conDP','Percentage of dropout in 12 months for control'),
-                                                       textInput('expDP','Percentage of dropout in 12 months for experiment'),
+                                                       textInput('conDP','Control Arm: Probability of drop out in 12 months'),
+                                                       textInput('expDP','Experiment Arm: Probability of drop out in 12 months'),
                                                        
                                                        actionButton("plotBtn3", "Display Dropout Curve"),
                                                        conditionalPanel(
@@ -163,7 +179,23 @@ shinyUI(navbarPage(title = 'Demo',
                               tabPanel("Actual Alpha Spending",
                                        column(9,
                                               plotOutput("aaPlot"))
+                                       ),
+                              tabPanel("Average Hazard Ratio",
+                                       fluidRow(
+                                         numericInput("tmaxA","Maximum time",value=50),
+                                         selectInput(
+                                           "ahr",
+                                           "Select the method",
+                                           choices = c("Geometric Schoenfeld","Geometric","Kalbfleisch and Prentice")
+                                         ),
+                                         actionButton("ahrButton","Display Average Hazard Ratio Plot")
+                                       ),
+                                       fluidRow(
+                                         column(9,
+                                                plotOutput("ahrPlot"))
                                        )
+                                       
+                              )
                             )),
                    tabPanel('Simulation',
                             h3("Here's the simulation."),
@@ -194,7 +226,7 @@ shinyUI(navbarPage(title = 'Demo',
                                        fluidRow(
                                          column(6,
                                                 radioButtons("testFunC", "Choose a function for Control",
-                                                             choices = list("Piecewise exponential" = "B","Weibull" = "C","Mixture cure rate of exponential"="D",
+                                                             choices = list("Exponential"="F","Piecewise exponential" = "B","Weibull" = "C","Mixture cure rate of exponential"="D",
                                                                             "Mixture cure rate of weibull"='E',"Customized distribution" = "A")),
                                                 uiOutput("inFunC"),
                                                 conditionalPanel(
@@ -203,12 +235,16 @@ shinyUI(navbarPage(title = 'Demo',
                                                 )),
                                          column(6,
                                                 radioButtons("testFunE", "Choose a function for Experiment",
-                                                             choices = list("Piecewise exponential " = "B","Weibull" = "C","Mixture cure rate of exponential"="D",
+                                                             choices = list("Exponential"="F","Piecewise exponential " = "B","Weibull" = "C","Mixture cure rate of exponential"="D",
                                                                             "Mixture cure rate of weibull"='E',"Customized distribution" = "A")),
                                                 uiOutput("inFunE"),
                                                 conditionalPanel(
                                                   condition = "input.testFunE === 'B'",
                                                   uiOutput("moreInputsE")
+                                                ),
+                                                conditionalPanel(
+                                                  condition = "input.testFunE === 'F'",
+                                                  uiOutput("medExpOutS")
                                                 ))
                                        ),
                                        h6("To customize function: Example 1: if follows an exponential distribution with a median of 12 months, then the survival function is exp(-log(2)/12 * t).

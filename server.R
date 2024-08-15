@@ -4,6 +4,7 @@ library(DT)
 library(nphRshiny)
 library(tidyverse)
 library(plotly)
+library(mvtnorm)
 
 # Define server logic required to draw a histogram
 function(input, output, session) {
@@ -19,6 +20,11 @@ function(input, output, session) {
   # for test parameter
   output$inFunControl <- renderUI({
     inputs <- list()
+    if (input$testFunControl == "F"){
+      message <- "Please provide the median for the control arm. "
+      inputs[['A']] <- HTML(paste("<p>", message, "</p>"))
+      inputs[['medC']] <- textInput("medC", "Median of control")
+    }
     
     if (input$testFunControl == "A") {
       message <- "Please provide the function formula for the control arm. "
@@ -59,6 +65,10 @@ function(input, output, session) {
   
   output$inFunExperiment <- renderUI({
     inputs <- list()
+    if (input$testFunExperiment == "F"){
+      
+      inputs[['expMethod']] <- radioButtons("expMethod", "Please choose one method to input. ",choices = list("Median","Hazard ratio"))
+    }
     
     if (input$testFunExperiment == "A") {
       message <- "Please provide the function formula for the experimental arm." 
@@ -122,6 +132,18 @@ function(input, output, session) {
         )
       })
       do.call(tagList, experimentInputs)
+    })
+  })
+  
+  observeEvent(input$expMethod, {
+    req(input$testFunExperiment == "F")
+    output$medExpOut <- renderUI({
+      if (input$expMethod == "Median"){
+        textInput("medE","Median of Experimental")
+      } else{
+        textInput("hzE","Hazard ratio",)
+      }
+      
     })
   })
   
@@ -337,8 +359,10 @@ function(input, output, session) {
   
   h0 <- reactive({
     req(input$testFunControl)  # Ensure testFunControl is selected
-    
-    if (input$testFunControl == "A") {
+    if(input$testFunControl == "F"){
+      funcText <- paste("function(t){log(2)/",input$medC,"}")
+      return(eval(parse(text=funcText)))
+    }else if (input$testFunControl == "A") {
       req(input$custH0)  
       funcText <- paste("function(t) {", input$custH0, "}")
       return(eval(parse(text=funcText)))
@@ -356,9 +380,9 @@ function(input, output, session) {
           return(NULL)  
         } else {
           if (i == input$con) {
-            return(paste(hc, "*as.numeric(t >", tc, ")"))
+            return(paste(hc, "*as.numeric(t >=", tc, ")"))
           } else {
-            return(paste(hc, "*as.numeric(t >", tc, " & t <= ", tc_next, ")"))
+            return(paste(hc, "*as.numeric(t >=", tc, " & t < ", tc_next, ")"))
           }
         }
       })
@@ -404,127 +428,109 @@ function(input, output, session) {
   })
   
   h1 <- reactive({
-    req(input$testFunExperiment)  # Ensure testFunExperiment is selected
-    
-    if (input$testFunExperiment == "A") {
-      req(input$custH1)  
-      funcText <- paste("function(t) {", input$custH1, "}")
-      return(eval(parse(text=funcText)))
-    } else if (input$testFunExperiment == "B") {
-      req(input$exp)  
-      he_values <- sapply(1:input$exp, function(i) {
-        he <- input[[paste0("he_", i)]]
-        te <- as.numeric(input[[paste0("te_", i)]])
-        te_next <- if (i < input$exp) {
-          as.numeric(input[[paste0("te_", i + 1)]])
+    req(input$distEXP)
+    if(input$distEXP == "A"){
+      hratio = eval(str2lang(input$ratioExp))
+      hh1 <- function(t) {
+        h0_t <- h0()(t)
+        h0_t*hratio
+      }
+      return(hh1)
+    } else {
+      req(input$testFunExperiment)  
+      if(input$testFunExperiment == "F"){
+        if(input$expMethod == "Median"){
+          funcText <- paste("function(t){log(2)/",input$medE,"}")
+          return(eval(parse(text=funcText)))
         } else {
-          "+Inf"  # Assume open interval for the last segment
+          funcText <- paste("function(t){log(2)/(",input$medC,"/",input$hzE,")}")
+          return(eval(parse(text=funcText)))
         }
-        if (is.na(he) || is.na(te) || is.na(te_next)) {
-          return(NULL)  
-        } else {
-          if (i == input$exp) {
-            return(paste(he, "*as.numeric(t >", te, ")"))
+        
+      } else if (input$testFunExperiment == "A") {
+        req(input$custH1)  
+        funcText <- paste("function(t) {", input$custH1, "}")
+        return(eval(parse(text=funcText)))
+      } else if (input$testFunExperiment == "B") {
+        req(input$exp)  
+        he_values <- sapply(1:input$exp, function(i) {
+          he <- input[[paste0("he_", i)]]
+          te <- as.numeric(input[[paste0("te_", i)]])
+          te_next <- if (i < input$exp) {
+            as.numeric(input[[paste0("te_", i + 1)]])
           } else {
-            return(paste(he, "*as.numeric(t >", te, " & t <= ", te_next, ")"))
+            "+Inf"  # Assume open interval for the last segment
           }
+          if (is.na(he) || is.na(te) || is.na(te_next)) {
+            return(NULL)  
+          } else {
+            if (i == input$exp) {
+              return(paste(he, "*as.numeric(t >=", te, ")"))
+            } else {
+              return(paste(he, "*as.numeric(t >=", te, " & t < ", te_next, ")"))
+            }
+          }
+        })
+        
+        funcText <- paste("function(t) {", paste(he_values, collapse=" + "), "}")
+        return(eval(parse(text = funcText)))
+      } else if (input$testFunExperiment == "C"){
+        shape = eval(str2lang(input$shape1_e))
+        scale = eval(str2lang(input$scale1_e))
+        wh <- function(t) {
+          (shape / scale) * (t / scale)^(shape - 1)
         }
-      })
-      
-      funcText <- paste("function(t) {", paste(he_values, collapse=" + "), "}")
-      return(eval(parse(text = funcText)))
-    } else if (input$testFunExperiment == "C"){
-      shape = eval(str2lang(input$shape1_e))
-      scale = eval(str2lang(input$scale1_e))
-      wh <- function(t) {
-        (shape / scale) * (t / scale)^(shape - 1)
+        return(wh)
+      } else if (input$testFunExperiment == "D"){
+        lam = eval(str2lang(input$lam2_e))
+        p = eval(str2lang(input$p2_e))
+        ss0 <- function(t){
+          return(exp(-lam*t))
+        }
+        s <- function(t){
+          p + (1-p)*ss0(t)
+        }
+        f = function(t){dmcr(t,p=p,alpha=lam)}
+        h = function(t){f(t)/s(t)}
+        return(h)
+      } else if (input$testFunExperiment == "E"){
+        p = eval(str2lang(input$p3_e))
+        shape = eval(str2lang(input$shape3_e))
+        scale = eval(str2lang(input$scale3_e))
+        alpha = scale^(-shape)
+        ss0 <- function(t){
+          exp(-alpha*t^shape)
+        }
+        s <- function(t){
+          p + (1-p)*ss0(t)
+        }
+        f = function(t){dmcr(t,p=p,alpha=alpha, gamma=shape)}
+        h = function(t){f(t)/s(t)}
+        return(h)
       }
-      return(wh)
-    } else if (input$testFunExperiment == "D"){
-      lam = eval(str2lang(input$lam2_e))
-      p = eval(str2lang(input$p2_e))
-      ss0 <- function(t){
-        return(exp(-lam*t))
-      }
-      s <- function(t){
-        p + (1-p)*ss0(t)
-      }
-      f = function(t){dmcr(t,p=p,alpha=lam)}
-      h = function(t){f(t)/s(t)}
-      return(h)
-    } else if (input$testFunExperiment == "E"){
-      p = eval(str2lang(input$p3_e))
-      shape = eval(str2lang(input$shape3_e))
-      scale = eval(str2lang(input$scale3_e))
-      alpha = scale^(-shape)
-      ss0 <- function(t){
-        exp(-alpha*t^shape)
-      }
-      s <- function(t){
-        p + (1-p)*ss0(t)
-      }
-      f = function(t){dmcr(t,p=p,alpha=alpha, gamma=shape)}
-      h = function(t){f(t)/s(t)}
-      return(h)
     }
+    
   })
   
   logHR <- reactive({
-    req(input$testFunControl, input$testFunExperiment)  
     
-    if (input$testFunControl == "A" && input$testFunExperiment == "A") {
-      req(input$custH0, input$custH1)  
-      funcText <- paste("function(t) { log((", input$custH1,")/ (",input$custH0, "))}")
-      return(eval(parse(text=funcText)))
-    } else if (input$testFunControl == "B" && input$testFunExperiment == "B") {
-      req(input$con, input$exp)  
+    logHr <- function(t) {
+      # Evaluate h1 and h0 at each time point t
+      h1_t <- h1()(t)
+      h0_t <- h0()(t)
       
-      hc_values <- sapply(1:input$con, function(i) {
-        hc <- input[[paste0("hc_", i)]]
-        tc <- as.numeric(input[[paste0("tc_", i)]])
-        tc_next <- if (i < input$con) {
-          as.numeric(input[[paste0("tc_", i + 1)]])
-        } else {
-          "+Inf"  # Assume open interval for the last segment
-        }
-        if (is.na(hc) || is.na(tc) || is.na(tc_next)) {
-          return(NULL)  
-        } else {
-          if (i == input$con) {
-            return(paste(hc, "*as.numeric(t >", tc, ")"))
-          } else {
-            return(paste(hc, "*as.numeric(t >", tc, " & t <= ", tc_next, ")"))
-          }
-        }
-      })
-      
-      he_values <- sapply(1:input$exp, function(i) {
-        he <- input[[paste0("he_", i)]]
-        te <- as.numeric(input[[paste0("te_", i)]])
-        te_next <- if (i < input$exp) {
-          as.numeric(input[[paste0("te_", i + 1)]])
-        } else {
-          "+Inf"  # Assume open interval for the last segment
-        }
-        if (is.na(he) || is.na(te) || is.na(te_next)) {
-          return(NULL)  
-        } else {
-          if (i == input$exp) {
-            return(paste(he, "*as.numeric(t >", te, ")"))
-          } else {
-            return(paste(he, "*as.numeric(t >", te, " & t <= ", te_next, ")"))
-          }
-        }
-      })
-      funcText <- paste("function(t) { log((", paste(he_values, collapse=" + "),")/ (",paste(hc_values, collapse=" + "), "))}")
-      return(eval(parse(text = funcText)))
+      # Calculate the log hazard ratio
+      log(h1_t / h0_t)
     }
+    return(logHr)
   })
   
   s0 <- reactive({
     req(input$testFunControl)  
-    
-    if (input$testFunControl == "A") {
+    if (input$testFunControl == "F") {
+      funcText <- paste("function(t) {exp(-log(2)/", input$medC, "*t)}")
+      return(eval(parse(text=funcText)))
+    } else if (input$testFunControl == "A") {
       req(input$custS0)
       funcText <- paste("function(t) {", input$custS0, "}")
       return(eval(parse(text=funcText)))
@@ -543,13 +549,13 @@ function(input, output, session) {
         }
         if (i != input$con){
           pre <- ifelse(i==1,0,prev[[i-1]])
-          s[[i]] <- paste("(",pre,"+",hc,"*t","-",hc,"*",tc,")", "*", "as.numeric(t >", tc, "& t <=", tc_next, ")")
+          s[[i]] <- paste("(",pre,"+",hc,"*t","-",hc,"*",tc,")", "*", "as.numeric(t >=", tc, "& t <", tc_next, ")")
           func <- eval(parse(text= paste("function(t){",s[[i]],"}")))
           prev[[i]] <- as.numeric(func(tc_next))
         }
         else {
           pre <- ifelse(i==1,0,prev[[i-1]])
-          s[[i]] <- paste("(",pre,"+",hc,"*t","-",hc,"*",tc,")", "*", "as.numeric(t >", tc,")")
+          s[[i]] <- paste("(",pre,"+",hc,"*t","-",hc,"*",tc,")", "*", "as.numeric(t >=", tc,")")
         }
         
       }
@@ -591,71 +597,90 @@ function(input, output, session) {
   })
   
   s1 <- reactive({
-    req(input$testFunExperiment)  
-    
-    if (input$testFunExperiment == "A") {
-      req(input$custS1)
-      funcText <- paste("function(t) {", input$custS1, "}")
-      return(eval(parse(text=funcText)))
-    } else if (input$testFunExperiment == "B") {
-      req(input$exp) 
-      prev <- list()
-      s <- list()
-      
-      for (i in 1:input$exp) {
-        he <- input[[paste0("he_", i)]]
-        te <- as.numeric(input[[paste0("te_", i)]])
-        te_next <- if (i == input$exp) {
-          "+Inf" 
-        } else {
-          as.numeric(input[[paste0("te_", i + 1)]])
-        }
-        if (i != input$exp){
-          pre <- ifelse(i==1,0,prev[[i-1]])
-          s[[i]] <- paste("(",pre,"+",he,"*t","-",he,"*",te,")", "*", "as.numeric(t >", te, "& t <=", te_next, ")")
-          func <- eval(parse(text= paste("function(t){",s[[i]],"}")))
-          prev[[i]] <- as.numeric(func(te_next))
-        }
-        else {
-          pre <- ifelse(i==1,0,prev[[i-1]])
-          s[[i]] <- paste("(",pre,"+",he,"*t","-",he,"*",te,")", "*", "as.numeric(t >", te,")")
+    req(input$distEXP)
+    if(input$distEXP == "A"){
+      hratio = eval(str2lang(input$ratioExp))
+      ss1 <- function(t) {
+        s0_t <- s0()(t)
+        s0_t*hratio
+      }
+      return(ss1)
+    } else{
+      req(input$testFunExperiment)  
+      if (input$testFunExperiment == "F") {
+        if(input$expMethod == "Median"){
+          funcText <- paste("function(t) {exp(-log(2)/", input$medE, "*t)}")
+          return(eval(parse(text=funcText)))
+        } else{
+          funcText <- paste("function(t) {exp(-log(2)/(", input$medC,"/",input$hzE, ")*t)}")
+          return(eval(parse(text=funcText)))
         }
         
+      } else if (input$testFunExperiment == "A") {
+        req(input$custS1)
+        funcText <- paste("function(t) {", input$custS1, "}")
+        return(eval(parse(text=funcText)))
+      } else if (input$testFunExperiment == "B") {
+        req(input$exp) 
+        prev <- list()
+        s <- list()
+        
+        for (i in 1:input$exp) {
+          he <- input[[paste0("he_", i)]]
+          te <- as.numeric(input[[paste0("te_", i)]])
+          te_next <- if (i == input$exp) {
+            "+Inf" 
+          } else {
+            as.numeric(input[[paste0("te_", i + 1)]])
+          }
+          if (i != input$exp){
+            pre <- ifelse(i==1,0,prev[[i-1]])
+            s[[i]] <- paste("(",pre,"+",he,"*t","-",he,"*",te,")", "*", "as.numeric(t >=", te, "& t <", te_next, ")")
+            func <- eval(parse(text= paste("function(t){",s[[i]],"}")))
+            prev[[i]] <- as.numeric(func(te_next))
+          }
+          else {
+            pre <- ifelse(i==1,0,prev[[i-1]])
+            s[[i]] <- paste("(",pre,"+",he,"*t","-",he,"*",te,")", "*", "as.numeric(t >=", te,")")
+          }
+          
+        }
+        H1 <- paste(s,collapse = "+")
+        
+        funcText <- paste("function(t){exp(-(",H1,"))}")
+        return(eval(parse(text=funcText)))
+      } else if (input$testFunExperiment == "C"){
+        shape = eval(str2lang(input$shape1_e))
+        scale = eval(str2lang(input$scale1_e))
+        w <- function(t) {
+          exp(-(t / scale)^shape)
+        }
+        return(w)
+      } else if (input$testFunExperiment == "D"){
+        lam = eval(str2lang(input$lam2_e))
+        p = eval(str2lang(input$p2_e))
+        ss0 <- function(t){
+          return(exp(-lam*t))
+        }
+        s <- function(t){
+          p + (1-p)*ss0(t)
+        }
+        return(s)
+      } else if (input$testFunExperiment == "E"){
+        p = eval(str2lang(input$p3_e))
+        shape = eval(str2lang(input$shape3_e))
+        scale = eval(str2lang(input$scale3_e))
+        alpha = scale^(-shape)
+        ss0 <- function(t){
+          exp(-alpha*t^shape)
+        }
+        s <- function(t){
+          p + (1-p)*ss0(t)
+        }
+        return(s)
       }
-      H1 <- paste(s,collapse = "+")
-      
-      funcText <- paste("function(t){exp(-(",H1,"))}")
-      return(eval(parse(text=funcText)))
-    } else if (input$testFunExperiment == "C"){
-      shape = eval(str2lang(input$shape1_e))
-      scale = eval(str2lang(input$scale1_e))
-      w <- function(t) {
-        exp(-(t / scale)^shape)
-      }
-      return(w)
-    } else if (input$testFunExperiment == "D"){
-      lam = eval(str2lang(input$lam2_e))
-      p = eval(str2lang(input$p2_e))
-      ss0 <- function(t){
-        return(exp(-lam*t))
-      }
-      s <- function(t){
-        p + (1-p)*ss0(t)
-      }
-      return(s)
-    } else if (input$testFunExperiment == "E"){
-      p = eval(str2lang(input$p3_e))
-      shape = eval(str2lang(input$shape3_e))
-      scale = eval(str2lang(input$scale3_e))
-      alpha = scale^(-shape)
-      ss0 <- function(t){
-        exp(-alpha*t^shape)
-      }
-      s <- function(t){
-        p + (1-p)*ss0(t)
-      }
-      return(s)
     }
+    
   })
   
   output$functionDef <- renderText({
@@ -673,8 +698,8 @@ function(input, output, session) {
   })
   
   output$funcDef0 <- renderText({
-    if (!is.null(s1) && exists("s1")) {
-      func <- s1()  
+    if (!is.null(s0) && exists("s0")) {
+      func <- s0()  
       if (!is.null(func)) {
         capture.output(func) 
       } else {
@@ -684,6 +709,23 @@ function(input, output, session) {
       "Awaiting input..."  
     }
   })
+
+  
+  observeEvent(input$plotBtn, {
+    output$hz <- renderPlot({
+      
+      plot_S(
+        S = list(h0(), h1()),
+        Tmax = 50,
+        leg= list(x = 30, y = 1, txt = c("Control Arm", "Experimental Arm")),
+        param = list(xlab = "Time Since First Subject Randomized (mo)", ylab = "Hazard", main
+                     = "Hazard Curve Per Study Design")
+      )
+      
+    })
+  })
+  
+  
   
   
   showPlot0 <- reactiveVal(FALSE)
@@ -696,10 +738,7 @@ function(input, output, session) {
     req(showPlot0())
     plot_S(
       S = list(s0(), s1()),
-      Tmax = 50,
-      leg = list(x = 30, y = 1, txt = c("Control", "Exp. Arm")),
-      param = list(xlab = "Survival Time (mo)", ylab = "Survival", main =
-                     "Survival Curve Per Study Design")
+      Tmax = 50
     )
     
   })
@@ -739,7 +778,7 @@ function(input, output, session) {
   output$accCurve <- renderPlot({
     req(showPlot2(),data_ac())
     ggplot(data_ac(), aes(x = x, y = y)) +
-      geom_line() +
+      geom_line(lwd=3,color = 'seagreen3') +
       labs(title = "Recruitment Distribution Over Time",
            x = "Time (month)", y = "Enrollment") +
       theme_minimal()
@@ -774,7 +813,7 @@ function(input, output, session) {
   output$dpCurve1 <- renderPlot({
     req(showPlot3(),data_dpc())
     ggplot(data_dpc(), aes(x = x, y = y)) +
-      geom_line() +
+      geom_line(lwd=3,color = 'seagreen3') +
       labs(title = "Dropoff Distribution over Time for Control",
            x = "Time (month)", y = "Dropoff") +
       theme_minimal()
@@ -783,7 +822,7 @@ function(input, output, session) {
   output$dpCurve2 <- renderPlot({
     req(showPlot3(),data_dpe())
     ggplot(data_dpe(), aes(x = x, y = y)) +
-      geom_line() +
+      geom_line(lwd=3,color='blue3') +
       labs(title = "Dropoff Distribution over Time for Experimental",
            x = "Time (month)", y = "Dropoff") +
       theme_minimal()
@@ -803,6 +842,17 @@ function(input, output, session) {
     ex <- log(1-as.numeric(input$expDP)/12)
     funcText <- paste("function(t){1-exp(", ex,"*t)}")
     return(eval(parse(text=funcText)))
+  })
+  
+  G <- reactive({
+    req(input$conDP, input$expDP, input$ratio)
+    r = as.numeric(input$ratio)
+    Gt = function(t){
+      g1_t <- G1()(t)
+      g0_t <- G0()(t)
+      (1-r)*g0_t+r*g1_t
+    }
+    return(Gt)
   })
   
   
@@ -907,8 +957,8 @@ function(input, output, session) {
   output$powerPlot1 <- renderPlot({
     req(p_res())  # Ensure data is ready
     ggplot(p_res(), aes(x = DCO, y = cum.power)) +  # make sure column names are all lowercase or as named in the dataframe
-      geom_line(lty=2) +
-      geom_point(size=3)+
+      geom_line(lty=2,lwd=2, color = 'seagreen3') +
+      geom_point(size=8, color = 'seagreen3')+
       labs(x = "Time since 1st subject randomized at each analysis", y = "Power") +
       theme_minimal()
   })
@@ -916,8 +966,8 @@ function(input, output, session) {
   output$powerPlot2 <- renderPlot({
     req(p_res())  # Ensure data is ready
     ggplot(p_res(), aes(x = targetEvents, y = cum.power)) +  # Corrected to 'targetEvents' if that's the actual column name
-      geom_line(lty=2) +
-      geom_point(size=3)+
+      geom_line(lty=2,lwd=2, color = 'seagreen3') +
+      geom_point(size=8, color = 'seagreen3')+
       labs(x = "Number of events at each analyis", y = "Power") +
       theme_minimal()
   })
@@ -952,30 +1002,30 @@ function(input, output, session) {
       req(input$bu,input$cov,p_res())
       if(input$bu == "Z-scale"){
         ggplot(p_res(), aes(x = DCO, y = bd)) +  
-          geom_line(lty=2) +
-          geom_point(size=3)+
+          geom_line(lty=2,lwd=2,color='seagreen3') +
+          geom_point(size=8,color='seagreen3')+
           labs(x = "Time since 1st subject randomized at each analysis", y = "Boundary (Z-scale)") +
           theme_minimal()
         
       } else if(input$bu == "p-value(one-sided)"){
         ggplot(p_res(), aes(x = DCO, y = p)) +  
-          geom_line(lty=2) +
-          geom_point(size=3)+
+          geom_line(lty=2,lwd=2,color='seagreen3') +
+          geom_point(size=8,color='seagreen3')+
           labs(x = "Time since 1st subject randomized at each analysis", y = "Boundary (p-value, one-sided)") +
           theme_minimal()
         
       } else if(input$bu == "Hazard ratio"){
         if(input$cov == "H0"){
           ggplot(p_res(), aes(x = DCO, y = CV.HR.H0)) +  
-            geom_line(lty=2) +
-            geom_point(size=3)+
-            labs(x = "Time since 1st subject randomized at each analysis", y = "Boundary (Hazard ratio, H0)") +
+            geom_line(lty=2,lwd=2, color='seagreen3') +
+            geom_point(size=8, color='seagreen3')+
+            labs(x = "Time since 1st subject randomized at each analysis", y = "Boundary (Hazard ratio)") +
             theme_minimal()
         } else {
           ggplot(p_res(), aes(x = DCO, y = CV.HR.H1)) +  
-            geom_line(lty=2) +
-            geom_point(size=3)+
-            labs(x = "Time since 1st subject randomized at each analysis", y = "Boundary (Hazard ratio, H1)") +
+            geom_line(lty=2,lwd=2,color='seagreen3') +
+            geom_point(size=8,color='seagreen3')+
+            labs(x = "Time since 1st subject randomized at each analysis", y = "Boundary (Hazard ratio)") +
             theme_minimal()
         }
       }
@@ -986,11 +1036,32 @@ function(input, output, session) {
   output$aaPlot <- renderPlot({
     req(p_res())
     ggplot(p_res(), aes(x = DCO, y = cum.alpha)) +  
-      geom_line(lty=2) +
-      geom_point(size=3)+
+      geom_line(lty=2,lwd=2,color='seagreen3') +
+      geom_point(size=8,color='seagreen3')+
       labs(x = "Time since 1st subject randomized at each analysis", y = "Cumulative Alpha Spending") +
       theme_minimal()
   })
+  
+  observeEvent(input$ahrButton, {
+    
+    output$ahrPlot <- renderPlot({
+      req(input$ahr,input$tmaxA)
+      plot_AHR(
+        n = as.numeric(input$n),
+        Tmax = as.numeric(input$tmaxA),
+        r = as.numeric(input$ratio),
+        h0 = h0(),  
+        S0 = s0(),
+        h1 = h1(),
+        S1 = s1(),
+        Lambda = F.entry(),
+        method = input$ahr,
+        G = G()
+      )
+      
+      
+    })
+  }) 
   
   
   observeEvent(input$alpha, {
@@ -1031,7 +1102,8 @@ function(input, output, session) {
                        sf=sf, timing = c(t[i], 1), p1 = p1,
                        cum.alpha=cum,param=param)[1]
       }
-      plot(t, a, type="l", xlab="Information Time", ylab = "IA Alpha Spending")
+      plot(t, a, type="l", xlab="Information Time", ylab = "IA Alpha Spending", 
+           col = "seagreen3", lwd = 5)
     })
   })
   
@@ -1237,6 +1309,11 @@ function(input, output, session) {
   
   output$inFunC <- renderUI({
     inputs <- list()
+    if (input$testFunC == "F"){
+      message <- "Please provide the median for the control arm. "
+      inputs[['A']] <- HTML(paste("<p>", message, "</p>"))
+      inputs[['medCS']] <- textInput("medCS", "Median of control")
+    }
     
     if (input$testFunC == "A") {
       message <- HTML(paste(
@@ -1280,7 +1357,9 @@ function(input, output, session) {
   
   output$inFunE <- renderUI({
     inputs <- list()
-    
+    if (input$testFunE == "F"){
+     inputs[['expMethodS']] <- radioButtons("expMethodS", "Please choose one method to input. ",choices = list("Median","Hazard ratio"))
+    }
     if (input$testFunE == "A") {
       message <- "Please provide the function formula for the experimental arm."
       inputs[['A']] <- HTML(paste("<p>", message, "</p>"))
@@ -1343,6 +1422,18 @@ function(input, output, session) {
         )
       })
       do.call(tagList, experimentInputs)
+    })
+  })
+  
+  observeEvent(input$expMethodS, {
+    req(input$testFunE == "F")
+    output$medExpOutS <- renderUI({
+      if (input$expMethodS == "Median"){
+        textInput("medES","Median of Experimental")
+      } else{
+        textInput("hzES","Hazard ratio",)
+      }
+      
     })
   })
   
@@ -1517,6 +1608,9 @@ function(input, output, session) {
       p10 = as.numeric(eval(str2lang(input$p3_cS)))
       scale0 = as.numeric(eval(str2lang(input$scale3_cS)))
       shape0 = as.numeric(eval(str2lang(input$shape3_cS)))
+    } else if(input$testFunC=="F"){
+      dist0 = "exponential"
+      lam0 = log(2)/as.numeric(eval(str2lang(input$medCS)))
     }
     
     if(input$testFunE=="A"){
@@ -1539,15 +1633,16 @@ function(input, output, session) {
       p11 = as.numeric(eval(str2lang(input$p3_eS)))
       scale1 = as.numeric(eval(str2lang(input$scale3_eS)))
       shape1 = as.numeric(eval(str2lang(input$shape3_eS)))
+    } else if(input$testFunE=="F"){
+      dist1 = "exponential"
+      if (input$expMethodS == "Median"){
+        lam1 = log(2)/as.numeric(eval(str2lang(input$medES)))
+      } else {
+        m1 = as.numeric(eval(str2lang(input$medCS)))/as.numeric(eval(str2lang(input$hzES)))
+        lam1 = log(2)/m1
+      }
     }
-    #showError(scale0)
-    #showError(scale1)
-    #showError(p10)
-    #showError(p11)
-    #showError(lam0)
-    #showError(lam1)
-    #showError(shape0)
-    #showError(shape1)
+    
     powerS <- simulation.nphDesign(
       nSim = as.numeric(input$nSim),
       r = as.numeric(input$ratioS),
