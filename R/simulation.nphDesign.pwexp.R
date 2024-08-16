@@ -296,22 +296,33 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda
     }
   }
   
-  pow = matrix(NA, nrow=M, ncol=K)
+  pow = cum.pow = matrix(0, nrow=M, ncol=K)
   overall.pow = rep(0, M)
   
-  for(m in 1:M){for(j in 1:K){pow[m, j] = sum(wlr.sim[,m,j,5])/nSim}}
+  for(m in 1:M){for(j in 1:K){
+    pow[m, j] = sum(wlr.sim[,m,j,5])/nSim
+    for (i in 1:nSim){cum.pow[m,j]=cum.pow[m,j]+as.numeric(sum(wlr.sim[i,m,1:j,5])>=1)}
+    cum.pow[m,j]=cum.pow[m,j]/nSim
+    
+    }}
   for(m in 1:M){for(i in 1:nSim){
     overall.pow[m] =  overall.pow[m] + as.numeric(sum(wlr.sim[i,m,,5])>0)
   }}
   overall.pow = overall.pow / nSim
-  
+
   o=list()
   o$power = pow; o$overall.power = overall.pow
+  o$cum.pow = cum.pow
+  
   if (out.z) {o$wlr.simulations = wlr.sim}
   
   if(logrank=="Y"){
-    lr.pow = rep(NA, K)
-    for (j in 1:K) {lr.pow[j] = sum(lr.sim[,j,5])/nSim}
+    lr.pow = lr.cum.pow = rep(0, K)
+    for (j in 1:K) {
+      lr.pow[j] = sum(lr.sim[,j,5])/nSim
+      for (i in 1:nSim){lr.cum.pow[j]=lr.cum.pow[j]+as.numeric(sum(lr.sim[i,1:j,5])>=1)}
+      lr.cum.pow[j]=lr.cum.pow[j]/nSim
+    }
 
     lr.overall.pow = 0
     for (i in 1:nSim){lr.overall.pow = lr.overall.pow + as.numeric(sum(lr.sim[i,,5])>0)}
@@ -319,6 +330,7 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda
     
     o$lr.overall.power = lr.overall.pow
     o$lr.power = lr.pow
+    o$lr.cum.pow = lr.cum.pow
     if (out.z) {o$lr.simulations = lr.sim}
   }
   return(o)
