@@ -21,6 +21,7 @@ simulation.nphDesign(
   S0 = NULL,
   cuts0 = NULL,
   dist1 = "exponential",
+  HR = NULL,
   lam1 = log(2)/12 * 0.7,
   shape1 = NULL,
   scale1 = NULL,
@@ -83,7 +84,9 @@ lam0 = log(2) / median; For piecewise exponential distribution, lam0 is a vector
 
 \item{cuts0}{Cut points for piecewise exponential distribution for control arm}
 
-\item{dist1}{Type of distribution for experimental arm. See dist0.}
+\item{dist1}{Type of distribution for experimental arm. In addition to the options in dist0, "Proportional Hazards" is also available to dist1. When selected, HR is required.}
+
+\item{HR}{When dist1 = "Proportional Hazards", HR is required.}
 
 \item{lam1}{Hazard rates for experimental arm for intervals; for exponential distribution,
 lam1 = log(2) / median; For piecewise exponential distribution, lam1 is a vector of length 1 greater than length of cuts1.}
@@ -245,12 +248,12 @@ wlr.power.maxcombo(DCO = c(24, 36), overall.alpha=0.025, sf = "LDOF",
 #(c) Simulations for exploring weighted logrank tests option 1 and 2
 
 #(c1) Type I error; also output logrank test simulation results
-H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, r = 1, 
+H1 = simulation.nphDesign.pwexp(nSim=5, N = 100, r = 1, 
 A = 21, w=1.5,
 lam0=lambda0, lam1=lambda0*0.7, cuts0=NULL, cuts1=NULL,
 targetEvents = e, drop0 = 0.03/12, drop1=0.03/12,
 overall.alpha = 0.025, sf = "LDOF",
-H0 = "Y", logrank="Y", fws.options=list(fws1))
+H0 = "N", logrank="Y", fws.options=list(fws1))
 
 #same as above; using F.entry function to replac A and w specifications.
 H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, r=1, 
@@ -265,8 +268,15 @@ o=simulation.nphDesign(nSim=5, n = 100, r=1, Lambda=F.entry, drop0=0.03/12, drop
 dist0 = "exponential", lam0=lambda0, shape0 = NULL, scale0 = NULL, p10 = NULL, S0 = NULL, cuts0 = NULL,
 dist1 = "exponential", lam1=lambda0, shape1 = NULL, scale1 = NULL, p11 = NULL, S1 = NULL, cuts1 = NULL, 
 targetEvents = e, sf = "LDOF", param = NULL, overall.alpha = 0.025, p1=NULL, cum.alpha=NULL,
-logrank="N", fws.options=list(fws1), 
+logrank="Y", fws.options=list(fws1), 
 parallel=FALSE, n.cores=8, seed=2022, out.z = TRUE)
 
+#same as above using "Proportional Hazards" option
+o=simulation.nphDesign(nSim=5, n = 100, r=1, Lambda=F.entry, drop0=0.03/12, drop1=0.03/12, 
+dist0 = "exponential", lam0=lambda0, shape0 = NULL, scale0 = NULL, p10 = NULL, S0 = NULL, cuts0 = NULL,
+dist1 = "Proportional Hazards", HR=0.7, lam1=NULL, shape1 = NULL, scale1 = NULL, p11 = NULL, S1 = NULL, cuts1 = NULL, 
+targetEvents = e, sf = "LDOF", param = NULL, overall.alpha = 0.025, p1=NULL, cum.alpha=NULL,
+logrank="Y", fws.options=list(fws1), 
+parallel=FALSE, n.cores=8, seed=2022, out.z = TRUE)
 
 }
