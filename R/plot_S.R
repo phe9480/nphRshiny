@@ -32,8 +32,10 @@ plot_S = function(S = list(S0, S1), Tmax = 50,
   t = seq(0, Tmax, by = 0.1)
 
   s0 = apply(cbind(t), MARGIN=1,FUN=S[[1]])
+  s1 = apply(cbind(t), MARGIN=1,FUN=S[[2]])
   
-  plot(t, s0, type = "n", bty = "l", xlab = param$xlab, 
+  plot(t, seq(min(s0, s1), max(s0, s1), length.out=length(t)), type = "n", 
+       bty = "l", xlab = param$xlab, 
        ylab=param$ylab, main = param$main)
   
   col.seq = c("seagreen3","blue3","turquoise4","deeppink3","orange")
@@ -41,17 +43,17 @@ plot_S = function(S = list(S0, S1), Tmax = 50,
   for (i in 1:g){
     si = apply(cbind(t), MARGIN=1,FUN=S[[i]])
     if (g <= 5){
-      lines(t, si, lwd = 5, col = col.seq[i])
+      lines(t, si, lwd = 4, col = col.seq[i])
     }else{
-      lines(t, si, lwd = 5, col = i)
+      lines(t, si, lwd = 4, col = i)
     }
   }
   abline(h = seq(0, 1, 0.1), col="gray80", lty=3)
   abline(v=seq(0, Tmax, by=2), col="gray80", lty=3)
  
   if (g<= 5){
-    legend(leg$x, leg$y, leg$txt, col=col.seq[1:g], lwd=5, bty="n", cex=0.8)
+    legend(leg$x, leg$y, leg$txt, col=col.seq[1:g], lwd=4, bty="n", cex=0.8)
   } else {
-    legend(leg$x, leg$y, leg$txt, col=1:g, lwd=5, bty="n", cex=0.8)
+    legend(leg$x, leg$y, leg$txt, col=1:g, lwd=4, bty="n", cex=0.8)
   }
 }
