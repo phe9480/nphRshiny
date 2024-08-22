@@ -220,7 +220,7 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda
     clusterEvalQ(my.cluster, .libPaths(.libPaths())
     )
     registerDoParallel(cl = my.cluster)
-    clusterEvalQ(my.cluster, library(nphDesign))
+    clusterEvalQ(my.cluster, library(nphRshiny))
     sim.data=NULL
     
     for (i in 1:nSim) {
@@ -244,7 +244,41 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda
         wlri$result = as.numeric(wlri$inference=="Positive")
         wlr.sim[i, m, , ] = as.matrix(wlri[,c(2,3,5,6,8)])
       }
-    }    
+    }
+    for (i in 1:nSim) {
+      #(4). Standard log-rank test for all analyses if requested
+      if (logrank=="Y"){
+        if(K > 1){
+          #GSD boundary for each analysis
+          if(side == 1) {
+            z.bd <- gsDesign::gsDesign(k=K,  alpha=overall.alpha,timing=timing[1:(K-1)], 
+                                       sfu=gsDesign::sfLDOF)$upper$bound 
+          } else{
+            z.bd <- gsDesign::gsDesign(k=K,  alpha=overall.alpha/2,timing=timing[1:(K-1)], 
+                                       sfu=gsDesign::sfLDOF)$upper$bound 
+          }
+        } else {
+          if(side == 1) {z.bd = qnorm(1-overall.alpha)} else{z.bd = qnorm(1-overall.alpha/2)}
+        }
+        for (j in 1:K){
+          lr.test = survival::survdiff(survival::Surv(survTimeCut, 1-cnsrCut) ~ group, data = sim.data[[i]][[j]])
+          
+          #convert to z value in correct direction: z>0 means better experimental arm.
+          better = as.numeric(lr.test$obs[1] > lr.test$obs[2])
+          sign = 2*better - 1
+          z = sqrt(lr.test$chisq) * sign
+          
+          #count power
+          lr.sim[i, j, 1] = z
+          if (side == 1){ p = 1 - pnorm(z)} else {p = 2*(1 - pnorm(z))}
+          
+          lr.sim[i, j, 2] = p
+          lr.sim[i, j, 3] = j
+          lr.sim[i, j, 4] = z.bd[j]
+          lr.sim[i, j, 5] = as.numeric(z > z.bd[j])
+        }
+      }
+    }
   }else{
     for (i in 1:nSim) {
       #(1). Generate data
