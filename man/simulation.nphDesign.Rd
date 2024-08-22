@@ -277,6 +277,6 @@ dist0 = "exponential", lam0=lambda0, shape0 = NULL, scale0 = NULL, p10 = NULL, S
 dist1 = "Proportional Hazards", HR=0.7, lam1=NULL, shape1 = NULL, scale1 = NULL, p11 = NULL, S1 = NULL, cuts1 = NULL, 
 targetEvents = e, sf = "LDOF", param = NULL, overall.alpha = 0.025, p1=NULL, cum.alpha=NULL,
 logrank="Y", fws.options=list(fws1), 
-parallel=FALSE, n.cores=8, seed=2022, out.z = TRUE)
+parallel=FALSE, n.cores=8, seed=2022, out.z = FALSE)
 
 }
