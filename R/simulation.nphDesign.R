@@ -255,7 +255,7 @@ simulation.nphDesign = function(nSim=3, n = 100, r=1, A = 21, w=1.5,
     clusterEvalQ(my.cluster, .libPaths(.libPaths())
     )
     registerDoParallel(cl = my.cluster)
-    clusterEvalQ(my.cluster, library(nphDesign))
+    clusterEvalQ(my.cluster, library(nphRshiny))
     sim.data=NULL
     
     for (i in 1:nSim) {
