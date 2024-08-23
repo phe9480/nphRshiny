@@ -37,7 +37,8 @@
 #' @param p10 cure rate parameter for mixture cure rate distribution for control arm
 #' @param S0 Survival function for customized distribution for control arm.
 #' @param cuts0 Cut points for piecewise exponential distribution for control arm
-#' @param dist1 Type of distribution for experimental arm. See dist0. 
+#' @param dist1 Type of distribution for experimental arm. In addition to the options in dist0, "Proportional Hazards" is also available to dist1. When selected, HR is required.
+#' @param HR When dist1 = "Proportional Hazards", HR is required.
 #' @param lam1 hazard rate for piecewise exponential distribution for experimental arm
 #' @param shape1 shape parameter for weibull distribution for experimental arm. Refer to rweibull() for details.
 #' @param scale1 scale parameter for weibull distribution for experimental arm. Refer to rweibull() for details. 
@@ -100,15 +101,15 @@
 #' \item{power}{Power for each analysis}
 #' \item{overall.power}{Overall power of the group sequential design}
 #' \item{wlr.simulations}{Simulation results for each simulated study data. 
-#' An array with dimensions: nSim simulations X M testing strategies 
-#' (fws.options) X K analyses X variables:
+#' An array with dimensions (nSim, M, K, 5): nSim simulations, M testing strategies 
+#' (fws.options), K analyses, 5 variables below. For example, wlr.simulations[,1,2,] shows the 5 variables for simulations testing option 1 at analysis 2.
 #'      \itemize{ 
 #'      \item z value
 #'      \item p value
 #'      \item analysis
 #'      \item rejection boundary
 #'      \item testing result (1 = positive; 0 = negative)
-#'      }}
+#'      } z value: wlr.simulations[,1,2,1]; p value: wlr.simulations[,1,2,2]; analysis: wlr.simulations[,1,2,3]; rejection boundary: wlr.simulations[,1,2,4]; testing results: wlr.simulations[,1,2,5]}
 #' \item{lr.power}{Power for each analysis using log-rank test. Available if logrank ="Y"}
 #' \item{lr.overall.power}{Overall power of the group sequential design using logrank test}
 #' \item{lr.simulations}{Simulation results for each simulated study data using logrank test}
@@ -167,12 +168,12 @@
 #' #(c) Simulations for exploring weighted logrank tests option 1 and 2
 #' 
 #' #(c1) Type I error; also output logrank test simulation results
-#' H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, r = 1, 
+#' H1 = simulation.nphDesign.pwexp(nSim=5, N = 100, r = 1, 
 #' A = 21, w=1.5,
 #' lam0=lambda0, lam1=lambda0*0.7, cuts0=NULL, cuts1=NULL,
 #' targetEvents = e, drop0 = 0.03/12, drop1=0.03/12,
 #' overall.alpha = 0.025, sf = "LDOF",
-#' H0 = "Y", logrank="Y", fws.options=list(fws1))
+#' H0 = "N", logrank="Y", fws.options=list(fws1))
 #' 
 #' #same as above; using F.entry function to replac A and w specifications.
 #' H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, r=1, 
@@ -183,20 +184,20 @@
 #' H0 = "Y", logrank="Y", fws.options=list(fws1))
 #' 
 #' #same as above using the general function
-#' simulation.nphDesign(nSim=5, n = 100, r=1, Lambda=F.entry, drop0=0.03/12, drop1=0.03/12, 
+#' o=simulation.nphDesign(nSim=5, n = 100, r=1, Lambda=F.entry, drop0=0.03/12, drop1=0.03/12, 
 #' dist0 = "exponential", lam0=lambda0, shape0 = NULL, scale0 = NULL, p10 = NULL, S0 = NULL, cuts0 = NULL,
-#' dist1 = "exponential", lam1=lambda0, shape1 = NULL, scale1 = NULL, p11 = NULL, S1 = NULL, cuts1=NULL, 
+#' dist1 = "exponential", lam1=lambda0, shape1 = NULL, scale1 = NULL, p11 = NULL, S1 = NULL, cuts1 = NULL, 
 #' targetEvents = e, sf = "LDOF", param = NULL, overall.alpha = 0.025, p1=NULL, cum.alpha=NULL,
-#' logrank="N", fws.options=list(fws1), 
-#' parallel=FALSE, n.cores=8, seed=2022, out.z = FALSE)
-#' <<<<<<< Fanni123
+#' logrank="Y", fws.options=list(fws1), 
+#' parallel=FALSE, n.cores=8, seed=2022, out.z = TRUE)
+#' 
 #' #same as above using "Proportional Hazards" option
 #' o=simulation.nphDesign(nSim=5, n = 100, r=1, Lambda=F.entry, drop0=0.03/12, drop1=0.03/12, 
 #' dist0 = "exponential", lam0=lambda0, shape0 = NULL, scale0 = NULL, p10 = NULL, S0 = NULL, cuts0 = NULL,
 #' dist1 = "Proportional Hazards", HR=0.7, lam1=NULL, shape1 = NULL, scale1 = NULL, p11 = NULL, S1 = NULL, cuts1 = NULL, 
 #' targetEvents = e, sf = "LDOF", param = NULL, overall.alpha = 0.025, p1=NULL, cum.alpha=NULL,
 #' logrank="Y", fws.options=list(fws1), 
-#' parallel=FALSE, n.cores=8, seed=2022, out.z = FALSE)>>>>>>> main
+#' parallel=FALSE, n.cores=8, seed=2022, out.z = FALSE)
 #' 
 #' @export 
 simulation.nphDesign = function(nSim=3, n = 100, r=1, A = 21, w=1.5, 
@@ -204,21 +205,21 @@ simulation.nphDesign = function(nSim=3, n = 100, r=1, A = 21, w=1.5,
                                 dist0 = "exponential", lam0=log(2)/12,
                                 shape0 = NULL, scale0 = NULL,
                                 p10 = NULL, S0 = NULL, cuts0 = NULL,
-                                dist1 = "exponential", lam1=log(2)/12*0.7,
+                                dist1 = "exponential", HR=NULL, lam1=log(2)/12*0.7,
                                 shape1 = NULL, scale1 = NULL,
                                 p11 = NULL, S1 = NULL, cuts1=NULL, 
                                 targetEvents = c(30, 60), 
                                 sf = "LDOF", param = NULL, overall.alpha = 0.025, p1=NULL, cum.alpha=NULL,
                                 logrank="N", fws.options=list(fws5), 
                                 parallel=FALSE, n.cores=8, seed=2022, out.z = FALSE) {
-  
-  set.seed(seed)
-  side = 1 #always one-sided
-  
-  #Entry data
-  nEachMonth = f.nEachMonth(N=n, A=A, w=w, r=r, Lambda=Lambda)
-  n0 = sum(nEachMonth$n0); n1 = sum(nEachMonth$n1)
-  
+
+    set.seed(seed)
+    side = 1 #always one-sided
+    
+    #Entry data
+    nEachMonth = f.nEachMonth(N=n, A=A, w=w, r=r, Lambda=Lambda)
+    n0 = sum(nEachMonth$n0); n1 = sum(nEachMonth$n1)
+    
   ##############################
   #M Options of test strategies
   M = length(fws.options)
@@ -231,7 +232,7 @@ simulation.nphDesign = function(nSim=3, n = 100, r=1, A = 21, w=1.5,
   
   #incremental alpha
   alpha = f.alpha(overall.alpha=overall.alpha, sf=sf, timing=timing, p1=p1, cum.alpha=cum.alpha, param=param)
-  
+
   #weighted logrank test statistics
   wlr.sim = array(NA, dim=c(nSim, M, K, 5))
   if (logrank == "Y") {lr.sim = array(NA, dim=c(nSim, K, 5))}
@@ -255,16 +256,43 @@ simulation.nphDesign = function(nSim=3, n = 100, r=1, A = 21, w=1.5,
     clusterEvalQ(my.cluster, .libPaths(.libPaths())
     )
     registerDoParallel(cl = my.cluster)
-    clusterEvalQ(my.cluster, library(nphDesign))
+    clusterEvalQ(my.cluster, library(nphRshiny))
     sim.data=NULL
     
     for (i in 1:nSim) {
-      #(1). Generate data
       #(1). Generate survival data for each arm
       T0 = genSurv(dist = dist0, n = n0, lam=lam0, shape=shape0, scale=scale0,
                    p1=p10, S=S0, cuts=cuts0)
-      T1 = genSurv(dist = dist1, n = n1, lam=lam1, shape=shape1, scale=scale1,
-                   p1=p11, S=S1, cuts=cuts1)
+      if (dist1 == "Proportional Hazards"){
+        if (dist0 == "exponential"){
+          T1 = genSurv(dist = dist0, n = n1, lam=lam0*HR, shape=NULL, scale=NULL,
+                       p1=NULL, S=NULL, cuts=NULL)
+        }else if (dist0 == "weibull"){
+          T1 = genSurv(dist = dist0, n = n1, lam=NULL, shape=shape0, scale=scale0*HR^(-1/shape0),
+                       p1=NULL, S=NULL, cuts=NULL)
+        }else if (dist0 == "piecewise exponential"){
+          T1 = genSurv(dist = dist0, n = n1, lam=lam0*HR, shape=NULL, scale=NULL,
+                       p1=NULL, S=NULL, cuts=cuts0)
+        }else if (dist0 == "mixture cure rate of exponential"){
+          #Need customized survival function S1(t)
+          S1 = function(t){(p10+(1-p10)*exp(-lam0*t))^HR}
+          T1 = genSurv(dist = "customized", n = n1, lam=NULL, shape=NULL, scale=NULL,
+                       p1=NULL, S=S1, cuts=NULL)
+        }else if (dist0 == "mixture cure rate of weibull"){
+          #Need customized survival function S1(t)
+          S1 = function(t){(p10+(1-p10)*exp(-(t/scale0)^shape0))^HR}
+          T1 = genSurv(dist = "customized", n = n1, lam=NULL, shape=NULL, scale=NULL,
+                       p1=NULL, S=S1, cuts=NULL)
+        }else if (dist0 == "customized"){
+          #Need customized survival function S1(t)
+          S1 = function(t){S0(t)^HR}
+          T1 = genSurv(dist = "customized", n = n1, lam=NULL, shape=NULL, scale=NULL,
+                       p1=NULL, S=S1, cuts=NULL)
+        }
+      } else {
+        T1 = genSurv(dist = dist1, n = n1, lam=lam1, shape=shape1, scale=scale1,
+                     p1=p11, S=S1, cuts=cuts1)
+      }
       
       #Permutation of the original ordered samples
       T0 = sample(T0); T1 = sample(T1)
@@ -325,7 +353,7 @@ simulation.nphDesign = function(nSim=3, n = 100, r=1, A = 21, w=1.5,
         dati.cut[[ii]] = f.dataCut(data=dati, targetEvents=targetEvents[ii])
         dati.out[[ii]] = rbind(dati.out[[ii]], dati.cut[[ii]])
       }
-      
+ 
       sim.data[[i]]<-dati.out
     }
     
@@ -382,8 +410,36 @@ simulation.nphDesign = function(nSim=3, n = 100, r=1, A = 21, w=1.5,
       #(1). Generate survival data for each arm
       T0 = genSurv(dist = dist0, n = n0, lam=lam0, shape=shape0, scale=scale0,
                    p1=p10, S=S0, cuts=cuts0)
-      T1 = genSurv(dist = dist1, n = n1, lam=lam1, shape=shape1, scale=scale1,
-                   p1=p11, S=S1, cuts=cuts1)
+      if (dist1 == "Proportional Hazards"){
+        if (dist0 == "exponential"){
+          T1 = genSurv(dist = dist0, n = n1, lam=lam0*HR, shape=NULL, scale=NULL,
+                       p1=NULL, S=NULL, cuts=NULL)
+        }else if (dist0 == "weibull"){
+          T1 = genSurv(dist = dist0, n = n1, lam=NULL, shape=shape0, scale=scale0*HR^(-1/shape0),
+                       p1=NULL, S=NULL, cuts=NULL)
+        }else if (dist0 == "piecewise exponential"){
+          T1 = genSurv(dist = dist0, n = n1, lam=lam0*HR, shape=NULL, scale=NULL,
+                       p1=NULL, S=NULL, cuts=cuts0)
+        }else if (dist0 == "mixture cure rate of exponential"){
+          #Need customized survival function S1(t)
+          S1 = function(t){(p10+(1-p10)*exp(-lam0*t))^HR}
+          T1 = genSurv(dist = "customized", n = n1, lam=NULL, shape=NULL, scale=NULL,
+                       p1=NULL, S=S1, cuts=NULL)
+        }else if (dist0 == "mixture cure rate of weibull"){
+          #Need customized survival function S1(t)
+          S1 = function(t){(p10+(1-p10)*exp(-(t/scale0)^shape0))^HR}
+          T1 = genSurv(dist = "customized", n = n1, lam=NULL, shape=NULL, scale=NULL,
+                       p1=NULL, S=S1, cuts=NULL)
+        }else if (dist0 == "customized"){
+          #Need customized survival function S1(t)
+          S1 = function(t){S0(t)^HR}
+          T1 = genSurv(dist = "customized", n = n1, lam=NULL, shape=NULL, scale=NULL,
+                       p1=NULL, S=S1, cuts=NULL)
+        }
+      } else {
+        T1 = genSurv(dist = dist1, n = n1, lam=lam1, shape=shape1, scale=scale1,
+                     p1=p11, S=S1, cuts=cuts1)
+      }
       
       #Permutation of the original ordered samples
       T0 = sample(T0); T1 = sample(T1)
@@ -476,7 +532,7 @@ simulation.nphDesign = function(nSim=3, n = 100, r=1, A = 21, w=1.5,
           lr.test = survival::survdiff(survival::Surv(survTimeCut, 1-cnsrCut) ~ group, data = dati.out[[j]])
           
           #convert to z value in correct direction: z>0 means better experimental arm.
-          better = as.numeric(lr.test$obs[1] > lr.test$obs[2])
+          better = as.numeric(lr.test$obs[2] < lr.test$exp[2])
           sign = 2*better - 1
           z = sqrt(lr.test$chisq) * sign
           
@@ -494,10 +550,16 @@ simulation.nphDesign = function(nSim=3, n = 100, r=1, A = 21, w=1.5,
     }
   }
   
-  pow = matrix(NA, nrow=M, ncol=K)
+  pow = cum.pow = matrix(0, nrow=M, ncol=K)
   overall.pow = rep(0, M)
   
-  for(m in 1:M){for(j in 1:K){pow[m, j] = sum(wlr.sim[,m,j,5])/nSim}}
+  for(m in 1:M){for(j in 1:K){
+    pow[m, j] = sum(wlr.sim[,m,j,5])/nSim
+    
+    for (i in 1:nSim){cum.pow[m,j]=cum.pow[m,j]+as.numeric(sum(wlr.sim[i,m,1:j,5])>=1)}
+    cum.pow[m,j]=cum.pow[m,j]/nSim
+    
+  }}
   for(m in 1:M){for(i in 1:nSim){
     overall.pow[m] =  overall.pow[m] + as.numeric(sum(wlr.sim[i,m,,5])>0)
   }}
@@ -505,18 +567,25 @@ simulation.nphDesign = function(nSim=3, n = 100, r=1, A = 21, w=1.5,
   
   o=list()
   o$power = pow; o$overall.power = overall.pow
+  o$cum.pow = cum.pow
+  
   if (out.z) {o$wlr.simulations = wlr.sim}
   
   if(logrank=="Y"){
-    lr.pow = rep(NA, K)
-    for (j in 1:K) {lr.pow[j] = sum(lr.sim[,j,5])/nSim}
-    
+    lr.pow = lr.cum.pow = rep(0, K)
+    for (j in 1:K) {
+      lr.pow[j] = sum(lr.sim[,j,5])/nSim
+      for (i in 1:nSim){lr.cum.pow[j]=lr.cum.pow[j]+as.numeric(sum(lr.sim[i,1:j,5])>=1)}
+      lr.cum.pow[j]=lr.cum.pow[j]/nSim
+    }
+
     lr.overall.pow = 0
     for (i in 1:nSim){lr.overall.pow = lr.overall.pow + as.numeric(sum(lr.sim[i,,5])>0)}
     lr.overall.pow = lr.overall.pow / nSim
     
     o$lr.overall.power = lr.overall.pow
     o$lr.power = lr.pow
+    o$lr.cum.pow = lr.cum.pow
     if (out.z) {o$lr.simulations = lr.sim}
   }
   return(o)
