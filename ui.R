@@ -335,7 +335,7 @@ shinyUI(navbarPage(title = tags$div(tags$img(src="https://i.postimg.cc/QCn8wk28/
                                          uiOutput("eveInputS"),
                                          selectInput("lr","Log-rank test requested",choices = c('N','Y')),
                                          selectInput("parS","Parallel requested",choices = c('F','T')),
-                                         numericInput("coreS","Number of cores",value=8),
+                                         selectInput("coreS","Number of cores",choices = c(1:4)),
                                          numericInput("seed","Seed",value=2022),
                                          actionButton("prunS", "Start simulation")
                                          
