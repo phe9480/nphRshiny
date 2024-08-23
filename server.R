@@ -5,6 +5,10 @@ library(nphRshiny)
 library(tidyverse)
 library(plotly)
 library(mvtnorm)
+library(gsDesign)
+library(parallel)  
+library(foreach)  
+library(doParallel)
 
 # Define server logic required to draw a histogram
 function(input, output, session) {
@@ -21,9 +25,7 @@ function(input, output, session) {
   output$inFunControl <- renderUI({
     inputs <- list()
     if (input$testFunControl == "F"){
-      message <- "Please provide the median for the control arm. "
-      inputs[['A']] <- HTML(paste("<p>", message, "</p>"))
-      inputs[['medC']] <- textInput("medC", "Median of control")
+      inputs[['conMethod']] <- radioButtons("conMethod", "Please choose one method to input. ",choices = list("Median","Survival"))
     }
     
     if (input$testFunControl == "A") {
@@ -67,7 +69,7 @@ function(input, output, session) {
     inputs <- list()
     if (input$testFunExperiment == "F"){
       
-      inputs[['expMethod']] <- radioButtons("expMethod", "Please choose one method to input. ",choices = list("Median","Hazard ratio"))
+      inputs[['expMethod']] <- radioButtons("expMethod", "Please choose one method to input. ",choices = list("Median","Survival"))
     }
     
     if (input$testFunExperiment == "A") {
@@ -135,13 +137,36 @@ function(input, output, session) {
     })
   })
   
+  observeEvent(input$conMethod, {
+    req(input$testFunControl == "F")
+    output$medConOut <- renderUI({
+      if (input$conMethod == "Median"){
+        textInput("medC","Median of Control")
+      } else{
+        fluidRow(
+          column(6,
+                 textInput("surC","Survival")),
+          column(6,
+                 textInput("tCon","At (month)"))
+        )
+        
+      }
+      
+    })
+  })
+  
   observeEvent(input$expMethod, {
     req(input$testFunExperiment == "F")
     output$medExpOut <- renderUI({
       if (input$expMethod == "Median"){
         textInput("medE","Median of Experimental")
       } else{
-        textInput("hzE","Hazard ratio",)
+        fluidRow(
+          column(6,
+                 textInput("surE","Survival")),
+          column(6,
+                 textInput("tExp","At (month)"))
+        )
       }
       
     })
@@ -360,8 +385,13 @@ function(input, output, session) {
   h0 <- reactive({
     req(input$testFunControl)  # Ensure testFunControl is selected
     if(input$testFunControl == "F"){
-      funcText <- paste("function(t){log(2)/",input$medC,"}")
-      return(eval(parse(text=funcText)))
+      if(input$conMethod == "Median"){
+        funcText <- paste("function(t){log(2)/",input$medC,"}")
+        return(eval(parse(text=funcText)))
+      } else {
+        funcText <- paste("function(t){-log(",input$surC,")/",input$tCon,"}")
+        return(eval(parse(text=funcText)))
+      }
     }else if (input$testFunControl == "A") {
       req(input$custH0)  
       funcText <- paste("function(t) {", input$custH0, "}")
@@ -443,7 +473,7 @@ function(input, output, session) {
           funcText <- paste("function(t){log(2)/",input$medE,"}")
           return(eval(parse(text=funcText)))
         } else {
-          funcText <- paste("function(t){log(2)/(",input$medC,"/",input$hzE,")}")
+          funcText <- paste("function(t){-log(",input$surE,")/",input$tExp,"}")
           return(eval(parse(text=funcText)))
         }
         
@@ -528,8 +558,14 @@ function(input, output, session) {
   s0 <- reactive({
     req(input$testFunControl)  
     if (input$testFunControl == "F") {
-      funcText <- paste("function(t) {exp(-log(2)/", input$medC, "*t)}")
-      return(eval(parse(text=funcText)))
+      
+      if(input$conMethod == "Median"){
+        funcText <- paste("function(t) {exp(-log(2)/", input$medC, "*t)}")
+        return(eval(parse(text=funcText)))
+      } else {
+        funcText <- paste("function(t){exp(log(",input$surC,")/",input$tCon,"*t)}")
+        return(eval(parse(text=funcText)))
+      }
     } else if (input$testFunControl == "A") {
       req(input$custS0)
       funcText <- paste("function(t) {", input$custS0, "}")
@@ -549,13 +585,23 @@ function(input, output, session) {
         }
         if (i != input$con){
           pre <- ifelse(i==1,0,prev[[i-1]])
-          s[[i]] <- paste("(",pre,"+",hc,"*t","-",hc,"*",tc,")", "*", "as.numeric(t >=", tc, "& t <", tc_next, ")")
+          if (i == 1){
+            s[[i]] <- paste("(",pre,"+",hc,"*t","-",hc,"*",tc,")", "*", "as.numeric(t >=", tc, "& t <=", tc_next, ")")
+          } else{
+            s[[i]] <- paste("(",pre,"+",hc,"*t","-",hc,"*",tc,")", "*", "as.numeric(t >", tc, "& t <=", tc_next, ")")
+          }
+          
           func <- eval(parse(text= paste("function(t){",s[[i]],"}")))
           prev[[i]] <- as.numeric(func(tc_next))
         }
         else {
           pre <- ifelse(i==1,0,prev[[i-1]])
-          s[[i]] <- paste("(",pre,"+",hc,"*t","-",hc,"*",tc,")", "*", "as.numeric(t >=", tc,")")
+          if (i == 1){
+            s[[i]] <- paste("(",pre,"+",hc,"*t","-",hc,"*",tc,")", "*", "as.numeric(t >=", tc,")")
+          } else {
+            s[[i]] <- paste("(",pre,"+",hc,"*t","-",hc,"*",tc,")", "*", "as.numeric(t >", tc,")")
+          }
+          
         }
         
       }
@@ -602,7 +648,7 @@ function(input, output, session) {
       hratio = eval(str2lang(input$ratioExp))
       ss1 <- function(t) {
         s0_t <- s0()(t)
-        s0_t*hratio
+        s0_t^hratio
       }
       return(ss1)
     } else{
@@ -611,8 +657,8 @@ function(input, output, session) {
         if(input$expMethod == "Median"){
           funcText <- paste("function(t) {exp(-log(2)/", input$medE, "*t)}")
           return(eval(parse(text=funcText)))
-        } else{
-          funcText <- paste("function(t) {exp(-log(2)/(", input$medC,"/",input$hzE, ")*t)}")
+        } else {
+          funcText <- paste("function(t){exp(log(",input$surE,")/",input$tExp,"*t)}")
           return(eval(parse(text=funcText)))
         }
         
@@ -635,13 +681,23 @@ function(input, output, session) {
           }
           if (i != input$exp){
             pre <- ifelse(i==1,0,prev[[i-1]])
-            s[[i]] <- paste("(",pre,"+",he,"*t","-",he,"*",te,")", "*", "as.numeric(t >=", te, "& t <", te_next, ")")
+            if (i == 1){
+              s[[i]] <- paste("(",pre,"+",he,"*t","-",he,"*",te,")", "*", "as.numeric(t >=", te, "& t <=", te_next, ")")
+            } else {
+              s[[i]] <- paste("(",pre,"+",he,"*t","-",he,"*",te,")", "*", "as.numeric(t >", te, "& t <=", te_next, ")")
+            }
+            
             func <- eval(parse(text= paste("function(t){",s[[i]],"}")))
             prev[[i]] <- as.numeric(func(te_next))
           }
           else {
             pre <- ifelse(i==1,0,prev[[i-1]])
-            s[[i]] <- paste("(",pre,"+",he,"*t","-",he,"*",te,")", "*", "as.numeric(t >=", te,")")
+            if (i == 1){
+              s[[i]] <- paste("(",pre,"+",he,"*t","-",he,"*",te,")", "*", "as.numeric(t >=", te,")")
+            } else{
+              s[[i]] <- paste("(",pre,"+",he,"*t","-",he,"*",te,")", "*", "as.numeric(t >", te,")")
+            }
+            
           }
           
         }
@@ -745,22 +801,6 @@ function(input, output, session) {
   
   output$showPlot0 <- reactive({ showPlot0() })
   outputOptions(output, "showPlot0", suspendWhenHidden = FALSE)
-  
-  
-  showPlot1 <- reactiveVal(FALSE)
-  
-  observeEvent(input$plotBtn1, {
-    showPlot1(TRUE)  # Set the reactive value to TRUE when button is clicked
-  })
-  
-  output$as <- renderPlot({
-    req(showPlot1())
-    
-    
-  })
-  
-  output$showPlot1 <- reactive({ showPlot1() })
-  outputOptions(output, "showPlot1", suspendWhenHidden = FALSE)
   
   data_ac <- reactive({
     req(F.entry())  
@@ -954,22 +994,24 @@ function(input, output, session) {
     
   })
   
-  output$powerPlot1 <- renderPlot({
+  output$powerPlot1 <- renderPlotly({
     req(p_res())  # Ensure data is ready
-    ggplot(p_res(), aes(x = DCO, y = cum.power)) +  # make sure column names are all lowercase or as named in the dataframe
+    p=ggplot(p_res(), aes(x = DCO, y = cum.power)) +  # make sure column names are all lowercase or as named in the dataframe
       geom_line(lty=2,lwd=2, color = 'seagreen3') +
       geom_point(size=8, color = 'seagreen3')+
       labs(x = "Time since 1st subject randomized at each analysis", y = "Power") +
       theme_minimal()
+    ggplotly(p)
   })
   
-  output$powerPlot2 <- renderPlot({
+  output$powerPlot2 <- renderPlotly({
     req(p_res())  # Ensure data is ready
-    ggplot(p_res(), aes(x = targetEvents, y = cum.power)) +  # Corrected to 'targetEvents' if that's the actual column name
+    p = ggplot(p_res(), aes(x = targetEvents, y = cum.power)) +  # Corrected to 'targetEvents' if that's the actual column name
       geom_line(lty=2,lwd=2, color = 'seagreen3') +
       geom_point(size=8, color = 'seagreen3')+
       labs(x = "Number of events at each analyis", y = "Power") +
       theme_minimal()
+    ggplotly(p)
   })
   
   observeEvent(input$eve, {
@@ -998,48 +1040,53 @@ function(input, output, session) {
   
   observeEvent(input$bButton, {
     
-    output$bPlot <- renderPlot({
+    output$bPlot <- renderPlotly({
       req(input$bu,input$cov,p_res())
       if(input$bu == "Z-scale"){
-        ggplot(p_res(), aes(x = DCO, y = bd)) +  
+        p=ggplot(p_res(), aes(x = DCO, y = bd)) +  
           geom_line(lty=2,lwd=2,color='seagreen3') +
           geom_point(size=8,color='seagreen3')+
           labs(x = "Time since 1st subject randomized at each analysis", y = "Boundary (Z-scale)") +
           theme_minimal()
+        ggplotly(p)
         
       } else if(input$bu == "p-value(one-sided)"){
-        ggplot(p_res(), aes(x = DCO, y = p)) +  
+        p=ggplot(p_res(), aes(x = DCO, y = p)) +  
           geom_line(lty=2,lwd=2,color='seagreen3') +
           geom_point(size=8,color='seagreen3')+
           labs(x = "Time since 1st subject randomized at each analysis", y = "Boundary (p-value, one-sided)") +
           theme_minimal()
+        ggplotly(p)
         
       } else if(input$bu == "Hazard ratio"){
         if(input$cov == "H0"){
-          ggplot(p_res(), aes(x = DCO, y = CV.HR.H0)) +  
+          p=ggplot(p_res(), aes(x = DCO, y = CV.HR.H0)) +  
             geom_line(lty=2,lwd=2, color='seagreen3') +
             geom_point(size=8, color='seagreen3')+
             labs(x = "Time since 1st subject randomized at each analysis", y = "Boundary (Hazard ratio)") +
             theme_minimal()
+          ggplotly(p)
         } else {
-          ggplot(p_res(), aes(x = DCO, y = CV.HR.H1)) +  
+          p=ggplot(p_res(), aes(x = DCO, y = CV.HR.H1)) +  
             geom_line(lty=2,lwd=2,color='seagreen3') +
             geom_point(size=8,color='seagreen3')+
             labs(x = "Time since 1st subject randomized at each analysis", y = "Boundary (Hazard ratio)") +
             theme_minimal()
+          ggplotly(p)
         }
       }
       
     })
   })
   
-  output$aaPlot <- renderPlot({
+  output$aaPlot <- renderPlotly({
     req(p_res())
-    ggplot(p_res(), aes(x = DCO, y = cum.alpha)) +  
+    p=ggplot(p_res(), aes(x = DCO, y = cum.alpha)) +  
       geom_line(lty=2,lwd=2,color='seagreen3') +
       geom_point(size=8,color='seagreen3')+
       labs(x = "Time since 1st subject randomized at each analysis", y = "Cumulative Alpha Spending") +
       theme_minimal()
+    ggplotly(p)
   })
   
   observeEvent(input$ahrButton, {
@@ -1310,9 +1357,7 @@ function(input, output, session) {
   output$inFunC <- renderUI({
     inputs <- list()
     if (input$testFunC == "F"){
-      message <- "Please provide the median for the control arm. "
-      inputs[['A']] <- HTML(paste("<p>", message, "</p>"))
-      inputs[['medCS']] <- textInput("medCS", "Median of control")
+      inputs[['conMethodS']] <- radioButtons("conMethodS", "Please choose one method to input. ",choices = list("Median","Survival"))
     }
     
     if (input$testFunC == "A") {
@@ -1358,7 +1403,7 @@ function(input, output, session) {
   output$inFunE <- renderUI({
     inputs <- list()
     if (input$testFunE == "F"){
-     inputs[['expMethodS']] <- radioButtons("expMethodS", "Please choose one method to input. ",choices = list("Median","Hazard ratio"))
+     inputs[['expMethodS']] <- radioButtons("expMethodS", "Please choose one method to input. ",choices = list("Median","Survival"))
     }
     if (input$testFunE == "A") {
       message <- "Please provide the function formula for the experimental arm."
@@ -1425,13 +1470,37 @@ function(input, output, session) {
     })
   })
   
+  observeEvent(input$conMethodS, {
+    req(input$testFunC == "F")
+    output$medConOutS <- renderUI({
+      if (input$conMethodS == "Median"){
+        textInput("medCS","Median of Control")
+      } else{
+        fluidRow(
+          column(6,
+                 textInput("surCS","Survival")),
+          column(6,
+                 textInput("tConS","At (month)"))
+        )
+        
+      }
+      
+    })
+  })
+  
   observeEvent(input$expMethodS, {
     req(input$testFunE == "F")
     output$medExpOutS <- renderUI({
       if (input$expMethodS == "Median"){
         textInput("medES","Median of Experimental")
       } else{
-        textInput("hzES","Hazard ratio",)
+        fluidRow(
+          column(6,
+                 textInput("surES","Survival")),
+          column(6,
+                 textInput("tExpS","At (month)"))
+        )
+        
       }
       
     })
@@ -1586,6 +1655,7 @@ function(input, output, session) {
     p11 = NULL
     S1 = NULL
     cuts1 = NULL
+    HR = NULL
     
     if(input$testFunC=="A"){
       dist0 = "customized"
@@ -1610,76 +1680,139 @@ function(input, output, session) {
       shape0 = as.numeric(eval(str2lang(input$shape3_cS)))
     } else if(input$testFunC=="F"){
       dist0 = "exponential"
-      lam0 = log(2)/as.numeric(eval(str2lang(input$medCS)))
-    }
-    
-    if(input$testFunE=="A"){
-      dist1 = "customized"
-      S1 = s1S()
-    } else if(input$testFunE=="B"){
-      dist1 = "piecewise exponential"
-      lam1 = h1S()
-      cuts1 = cuts1()
-    } else if (input$testFunE=="C"){
-      dist1 = "weibull"
-      shape1 = as.numeric(eval(str2lang(input$shape1_eS)))
-      scale1 = as.numeric(eval(str2lang(input$scale1_eS)))
-    } else if(input$testFunE=="D"){
-      dist1 = "mixture cure rate of exponential"
-      p11 = as.numeric(eval(str2lang(input$p2_eS)))
-      lam1 = as.numeric(eval(str2lang(input$lam2_eS)))
-    } else if(input$testFunE=="E"){
-      dist1 = "mixture cure rate of weibull"
-      p11 = as.numeric(eval(str2lang(input$p3_eS)))
-      scale1 = as.numeric(eval(str2lang(input$scale3_eS)))
-      shape1 = as.numeric(eval(str2lang(input$shape3_eS)))
-    } else if(input$testFunE=="F"){
-      dist1 = "exponential"
-      if (input$expMethodS == "Median"){
-        lam1 = log(2)/as.numeric(eval(str2lang(input$medES)))
+      if(input$conMethodS == 'Median'){
+        lam0 = log(2)/as.numeric(eval(str2lang(input$medCS)))
       } else {
-        m1 = as.numeric(eval(str2lang(input$medCS)))/as.numeric(eval(str2lang(input$hzES)))
-        lam1 = log(2)/m1
+        SR = as.numeric(eval(str2lang(input$surCS)))
+        ATO = as.numeric(eval(str2lang(input$tConS)))
+        lam0 = -log(as.numeric(SR))/ATO
       }
+      
     }
     
-    powerS <- simulation.nphDesign(
-      nSim = as.numeric(input$nSim),
-      r = as.numeric(input$ratioS),
-      n = as.numeric(input$nS),
-      targetEvents = eve,
-      overall.alpha = overall.alpha,
-      sf = sf,
-      param = param,
-      p1 = p1,
-      cum.alpha = cum, dist0 = dist0,
-      lam0 = lam0, shape0 = shape0, scale0 = scale0,
-      p10 = p10, S0 = S0, cuts0 = cuts0,
-      dist1 = dist1,
-      lam1 = lam1, shape1 = shape1, scale1 = scale1,
-      p11 = p11, S1 = S1, cuts1 = cuts1,
-      fws.options = wss_s(),
-      Lambda = F.entryS(),  
-      drop0 = as.numeric(input$conDPS)/12,
-      drop1 = as.numeric(input$expDPS)/12,
-      logrank = input$lr
-    )
-    powerS$power
+    if (input$distEXPS == 'A'){
+      dist1 = "Proportional Hazards"
+      HR = as.numeric(input$ratioExpS)
+    } else{
+      if(input$testFunE=="A"){
+        dist1 = "customized"
+        S1 = s1S()
+      } else if(input$testFunE=="B"){
+        dist1 = "piecewise exponential"
+        lam1 = h1S()
+        cuts1 = cuts1()
+      } else if (input$testFunE=="C"){
+        dist1 = "weibull"
+        shape1 = as.numeric(eval(str2lang(input$shape1_eS)))
+        scale1 = as.numeric(eval(str2lang(input$scale1_eS)))
+      } else if(input$testFunE=="D"){
+        dist1 = "mixture cure rate of exponential"
+        p11 = as.numeric(eval(str2lang(input$p2_eS)))
+        lam1 = as.numeric(eval(str2lang(input$lam2_eS)))
+      } else if(input$testFunE=="E"){
+        dist1 = "mixture cure rate of weibull"
+        p11 = as.numeric(eval(str2lang(input$p3_eS)))
+        scale1 = as.numeric(eval(str2lang(input$scale3_eS)))
+        shape1 = as.numeric(eval(str2lang(input$shape3_eS)))
+      } else if(input$testFunE=="F"){
+        dist1 = "exponential"
+        if(input$expMethodS == 'Median'){
+          lam1 = log(2)/as.numeric(eval(str2lang(input$medES)))
+        } else {
+          SR = as.numeric(eval(str2lang(input$surES)))
+          ATO = as.numeric(eval(str2lang(input$tExpS)))
+          lam1 = -log(as.numeric(SR))/ATO
+        }
+      }}
+      parall <- if_else(input$parS == 'T', TRUE, FALSE)
+      
+      powerS <- simulation.nphDesign(
+        nSim = as.numeric(input$nSim),
+        r = as.numeric(input$ratioS),
+        n = as.numeric(input$nS),
+        targetEvents = eve,
+        overall.alpha = overall.alpha,
+        sf = sf,
+        param = param,
+        p1 = p1,
+        cum.alpha = cum, dist0 = dist0,
+        lam0 = lam0, shape0 = shape0, scale0 = scale0,
+        p10 = p10, S0 = S0, cuts0 = cuts0,
+        dist1 = dist1, HR = HR,
+        lam1 = lam1, shape1 = shape1, scale1 = scale1,
+        p11 = p11, S1 = S1, cuts1 = cuts1,
+        fws.options = wss_s(),
+        Lambda = F.entryS(),  
+        drop0 = as.numeric(input$conDPS)/12,
+        drop1 = as.numeric(input$expDPS)/12,
+        logrank = input$lr,
+        parallel = parall,
+        n.cores = as.numeric(input$coreS),
+        seed = as.numeric(input$seed)
+      )
+      if (input$lr == 'N') {
+        data.frame(
+          Analysis = 1:as.numeric(input$lookS),
+          TargetEvents = eve,
+          Cumulative.Power = c(powerS$cum.pow),
+          row.names = NULL
+        )
+      } else if (input$lr == 'Y') {
+        data.frame(
+          Analysis = 1:as.numeric(input$lookS),
+          TargetEvents = eve,
+          Cumulative.Power = c(powerS$cum.pow),
+          LogRank.Cumulative.Power = c(powerS$lr.cum.pow),
+          row.names = NULL
+        )
+      }
+    
+    
   })
   
   output$power <- renderDataTable({
     req(p_ress())
     datatable(
       p_ress(),
-      extensions = 'Buttons',  # Enable buttons extension
+      extensions = 'Buttons',  
       options = list(
-        dom = 'Bfrtip',  # Positioning of table elements: buttons, filtering input, table info, pagination
-        buttons = list('colvis'),  # Add a column visibility button
+        dom = 'Bfrtip',  
+        buttons = list('colvis'), 
         scrollX = TRUE,
         pageLength = 10,
-        autoWidth = TRUE
+        rownames = FALSE
       )
     )
+    
+  })
+  
+  output$sim1 <- renderPlotly({
+    req(p_ress())
+    if(input$lr == 'N'){
+      p = ggplot(p_ress(),aes(x=TargetEvents, y=Cumulative.Power)) +
+        geom_line(lty=2,lwd=3,color='seagreen3')+
+        geom_point(size=8,color='seagreen3')+
+        labs(x='Target Events')+
+        theme_minimal()
+      ggplotly(p)
+    } else{
+      long_data <- p_ress() %>%
+        pivot_longer(
+          cols = c(Cumulative.Power, LogRank.Cumulative.Power),
+          names_to = "PowerType",
+          values_to = "Power"
+        )
+      
+      p = ggplot(long_data, aes(x = TargetEvents, y = Power, color = PowerType, shape = PowerType, linetype = PowerType)) +
+        geom_line(lwd = 3) +  
+        geom_point(size = 8) +  
+        labs(x = 'Target Events', y = 'Power') +
+        theme_minimal() +
+        scale_color_manual(values = c('seagreen3', 'blue3')) +
+        scale_shape_manual(values = c(19, 17)) +
+        scale_linetype_manual(values = c("dotdash", "dashed"))
+      ggplotly(p)
+    }
     
   })
   
