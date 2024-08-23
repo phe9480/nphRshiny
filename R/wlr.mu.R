@@ -88,7 +88,7 @@ wlr.mu = function(DCO = 24, n=600, r = 1,
                   cuts=NULL, 
                   rho = 0, gamma = 0, tau = NULL, s.tau = 0, f.ws = NULL,
                   Lambda = function(t){(t/18)*as.numeric(t <= 18) + as.numeric(t > 18)}, 
-                  G0 = function(t){0}, G1 = function(t){0}, mu.method="H1"){
+                  G0 = function(t){0}, G1 = function(t){0}, mu.method="Schoenfeld"){
 
   #Re-parameterization as consistent with the manuscript; r1 is proportion of experimental arm subjects.
   r1 = r / (r + 1); r0 = 1 - r1 
@@ -107,6 +107,7 @@ wlr.mu = function(DCO = 24, n=600, r = 1,
   if(mu.method == "H1") {
     mu = -sqrt(n*Lambda(DCO))*Delta / sqrt(sigma2)
   } else if (mu.method == "Schoenfeld") {
+    
     #Density functions
     f0 = function(t) {return(h0(t) * S0(t))}
     f1 = function(t) {return(h1(t) * S1(t))}  

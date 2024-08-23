@@ -34,7 +34,7 @@
 #' for (i in 1:length(t)){
 #'   a[i] = f.alpha(overall.alpha = 0.025, sf="LDOF", timing = c(t[i], 1), p1 = NULL)[1]
 #' }
-#' plot(t, a, type="l", xlab="Information Time", "IA Alpha Spending")
+#' plot(t, a, type="l", xlab="Information Time", ylab = "IA Alpha Spending")
 #' 
 #' @export
 #' 

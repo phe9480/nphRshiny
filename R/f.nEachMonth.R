@@ -39,7 +39,7 @@ f.nEachMonth = function (N=600, A=24, w=2, r=2, Lambda=NULL) {
     if (is.null(Lambda)){
       cN0i = max(round((i/A)^w * N0), 1)
     } else {
-      cN0i = max(round(Lambda(i/A) * N0), 1)
+      cN0i = max(round(Lambda(i) * N0), 1)
     }
     
     n0[i] = max(cN0i - cLastN0, 1)
