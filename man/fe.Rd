@@ -81,11 +81,11 @@ for each arm is provided.
 }
 \examples{
 #Example (1) Trial scenario: 1:1 randomization, n = 450, enrollment follows non-uniform 
-enrollment distribution with weight 1.5 and enrollment period is 18 months. 
-Control arm ~ exponential distribution with median 12 months, and 
-Experimental arm ~ exponential distribution (Proportional Hazards) with median 12 / 0.7 months.
-Assuming no lost-to-followup. Find the expected number of events at calendar time 24 months, i.e.
-6 months after last patient randomized.
+#enrollment distribution with weight 1.5 and enrollment period is 18 months. 
+#Control arm ~ exponential distribution with median 12 months, and 
+#Experimental arm ~ exponential distribution (Proportional Hazards) with median 12 / 0.7 months.
+#Assuming no lost-to-followup. Find the expected number of events at calendar time 24 months, i.e.
+#6 months after last patient randomized.
 
 HR = 0.65; delay = 6; lambda0 = log(2) / 12; 
 h0 = function(t){lambda0}; S0 = function(t){exp(-lambda0 * t)}
@@ -107,8 +107,8 @@ lines(1:max.DCO, nE[, 3], lty = 3, col=3)
 legend(0, max(nE), c("Control", "Experimental", "Total"), col=1:3, lty=1:3, bty="n", cex=0.8)
 
 #Example (2) Same trial set up as example (1) but assuming delayed effect for 
-experimental arm. The delayed period is assumed 6 months, and after delay the
-hazard ratio is assumed 0.65.
+#experimental arm. The delayed period is assumed 6 months, and after delay the
+#hazard ratio is assumed 0.65.
 
 HR = 0.65; delay = 6; lambda0 = log(2) / 12; 
 h0 = function(t){lambda0}; S0 = function(t){exp(-lambda0 * t)}

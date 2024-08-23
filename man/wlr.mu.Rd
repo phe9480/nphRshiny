@@ -35,7 +35,7 @@ wlr.mu(
   G1 = function(t) {
      0
  },
-  mu.method = "H1"
+  mu.method = "Schoenfeld"
 )
 }
 \arguments{

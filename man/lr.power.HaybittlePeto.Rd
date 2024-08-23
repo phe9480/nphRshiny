@@ -59,13 +59,13 @@ at each analysis for group sequential design
 }
 \examples{
 
-#(1) 
+#(1) Haybittle-Peto method for analyses performed at 96, 153, and 250 events with 1-sided p-value rejection boundary 0.0003 at IAs
 lr.power.HaybittlePeto(p1=0.0003, overall.alpha=0.025, hr = 0.7, r = 1, events=c(96, 153, 250))
 
-#(1) 
-lr.power.HaybittlePeto(p1=0.0003, overall.alpha=0.025, hr = 0.7, r = 1, events=c(229.4766, 340.8875))
+#(2) Haybittle-Peto method for analyses performed at 229 and 340 events with 1-sided p-value rejection boundary 0.0003 at IA
+lr.power.HaybittlePeto(p1=0.0003, overall.alpha=0.025, hr = 0.7, r = 1, events=c(229, 340))
 
-#(2) O'Brien Fleming alpha spending, variance under H1
+#(3) Haybittle-Peto method for analyses performed at 210 and 280 events with 1-sided p-value rejection boundary 0.0003 at IA, variance under H1
 lr.power.HaybittlePeto(p1=0.0003, overall.alpha=0.025, hr = 14/22, r = 1, events=c(210, 280))
                      
 }

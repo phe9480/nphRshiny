@@ -18,7 +18,9 @@ An object with dataframe below.
 \itemize{
 \item  p: Rejection boundary in p value (one-sided)
 \item  z: Rejection boundary in z value
-\item  alpha Incremental alpha(one-sided).
+\item  alpha Incremental alpha(one-sided)
+\item cum.alpha Cumulative alpha(one-sided)
+\item overall.alpha Overall alpha(one-sided)
 }
 }
 \description{
@@ -27,9 +29,15 @@ Specifically, incremental alpha_k = P(reject H0 at kth analysis while not reject
 Haybittle-Peto method has a fixed small p value rejection boundary at all IAs, which can preserve a large type I error for final analysis.
 }
 \examples{
-#Group sequential tests at information times 0.5, 0.7, 1.0 with overall alpha 0.025.
-#IA1 and IA2 have a rejection boundary p = 0.0003 (one-sided).
 
+#(1) Group sequential tests at information times 0.5, 0.7, 1.0 with overall alpha 0.025.
+#IA1 and IA2 have a rejection boundary p = 0.0003 (one-sided).
+ 
 HP(p1 = 3e-04, overall.alpha = 0.025, timing = c(0.5, 0.7, 1))
+
+(2) HP method at 0.7 information fraction after 0.0001/2 administrative alpha spent
+HP(p1 = 0.002/2, overall.alpha = 0.025-0.0001/2, timing = c(0.7, 1))
+
+HP(p1 = 0.002/2, overall.alpha = 0.025, timing = c(0.7, 1)) #without admin alpha spent
 
 }
