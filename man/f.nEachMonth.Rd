@@ -12,12 +12,15 @@ f.nEachMonth(N = 600, A = 24, w = 2, r = 2, Lambda = NULL)
 \item{A}{Total accrual period in months}
 
 \item{w}{Weight parameter in cumulative enrollment pattern.
-The cumulative enrollment at month t is (t / A)^w, eg, at month 6,
+The cumulative enrollment at month t is (t / A)^w, e.g., at month 6,
 the enrollment is N*(6/24)^2 = N/16 for 24 months planned accrual period.}
 
-\item{r}{Randomization ratio r:1, where r refers to the experimental arm, eg, r=2 in 2:1 ratio}
+\item{r}{Randomization ratio r:1, where r refers to the experimental arm,
+e.g., r=2 in 2:1 ratio}
 
-\item{Lambda}{Cumulative distribution function (CDF) for enrollment on (0, infinity). For example, uniform enrollment of 20 patients / month for 24 months has Lambda = function(t){t/24*as.numeric(t<= 24) + as.numeric(t>24)}.}
+\item{Lambda}{Cumulative distribution function (CDF) for enrollment on (0, infinity).
+For example, uniform enrollment of 20 patients / month for 24 months has
+Lambda = function(t){t/24*as.numeric(t<= 24) + as.numeric(t>24)}.}
 }
 \value{
 An object with elements:
@@ -28,4 +31,20 @@ An object with elements:
 }
 \description{
 Determine the Number of Patients Enrolled per Month according to specified recruitment pattern.
+}
+\examples{
+#Example (1). 500 subjects 2:1 randomization enrolled within 24 months with 
+#ramping up weight 1.5. For N not evenly split by 2 groups, add patients.
+
+o1 = f.nEachMonth(N=500, A=24, w=1.5, r=2, Lambda=NULL)
+sum(o1$n0) + sum(o1$n1)
+
+o2 = f.nEachMonth(N=501, A=24, w=1.5, r=2, Lambda=NULL)
+sum(o2$n0) + sum(o2$n1)
+
+#same as above
+F.entry = function(t){(t/24)^1.5*as.numeric(t <= 24) + as.numeric(t > 24)}
+o3 = f.nEachMonth(N=501, A=24, w=NULL, r=2, Lambda=F.entry)
+sum(o3$n0) + sum(o3$n1)
+
 }
