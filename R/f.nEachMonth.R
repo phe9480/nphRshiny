@@ -18,10 +18,10 @@
 #' 
 #' @export 
 #' 
-f.nEachMonth = function (N=600, A=24, w=2, r=2, Lambda=NULL) {
+f.nEachMonth <- function (N=600, A=24, w=2, r=2, Lambda=NULL) {
   
-  N1 = N * (r/(r+1))
-  N0 = N - N1
+  N1 = ceiling(N * (r/(r+1)))
+  N0 = ceiling(N - N1)
   
   #When r > 1, the control arm has smaller number of pts. 
   #Just need to determine enrollment for control arm per month, 
@@ -33,8 +33,9 @@ f.nEachMonth = function (N=600, A=24, w=2, r=2, Lambda=NULL) {
   
   #Determine number of pts per month for control arm
   #(i-1)th month cumulative enrolled pts
-  cLastN0 = 0
-  for (i in 1:A) {
+  cLastN0 = 0; s0 = s1 = 0; i = 1
+  while((s0 < N0||s1 < N1) && i <= A){
+    
     #ith month: cumulative #pts
     if (is.null(Lambda)){
       cN0i = max(round((i/A)^w * N0), 1)
@@ -45,15 +46,21 @@ f.nEachMonth = function (N=600, A=24, w=2, r=2, Lambda=NULL) {
     n0[i] = max(cN0i - cLastN0, 1)
     if (i == A) {n0[i] = N0 - sum(n0[1:(A-1)]) }
     cLastN0 = cN0i  
+    s0 = s0 + n0[i]
+    s1 = s1 + n0[i] * r
+    i = i + 1
   }
+
   n1 = n0 * r
   
+  #L = max(length(n0[!is.na(n0)]), length(n1[!is.na(n1)]))
+  
   #Patch for extreme rare scenarios that 0 enrollment in the last month
-  if(n0[A] == 0 && n0[A-1] > 1){n0[A-1] = n0[A-1]-1; n0[A]=1}
-  if(n1[A] == 0 && n1[A-1] > 1){n1[A-1] = n1[A-1]-1; n1[A]=1}
+  #  if(n0[A] == 0 && n0[A-1] > 1){n0[A-1] = n0[A-1]-1; n0[A]=1}
+  #  if(n1[A] == 0 && n1[A-1] > 1){n1[A-1] = n1[A-1]-1; n1[A]=1}
   
   o = list()
-  o$n0 = n0
-  o$n1 = n1
+  o$n0 = n0[n0>0 & !is.na(n0)]
+  o$n1 = n1[n1>0 & !is.na(n0)]
   return(o)
 }
