@@ -93,7 +93,7 @@ simulation.pwexp = function(nSim=100, N = 600, A = 21, w=1.5, Lambda = NULL,
                             cuts0=NULL, cuts1=NULL, drop0=0, drop1=0, 
                             targetEvents = c(400, 500), DCO = NULL) {
 
-  nEachMonth = f.nEachMonth(N=N, A=A, w=w, r=r, Lambda=Lambda)
+  nEachMonth = nphRshiny::f.nEachMonth(N=N, A=A, w=w, r=r, Lambda=Lambda)
   
   gamma = nEachMonth$n0 + nEachMonth$n1
   eta0 = -log(1-drop0)
