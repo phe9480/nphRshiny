@@ -60,7 +60,7 @@ f.nEachMonth <- function (N=600, A=24, w=2, r=2, Lambda=NULL) {
     } else {
       cN0i = max(ceiling(Lambda(i) * N0), 1)
     }
-    print(cN0i)
+    
     n0[i] = max(cN0i - cLastN0, 1)
     #if (i == A) {n0[i] = N0 - sum(n0[1:(A-1)]) }
     cLastN0 = cN0i  
