@@ -111,6 +111,7 @@
 #' @examples
 #' 
 #' #Utility functions
+#' lr = nphRshiny:::lr; fh01 = nphRshiny:::fh01; fh11 = nphRshiny:::fh11
 #' fws1 = list(IA1 = list(lr), FA = list(lr))
 #' fws2 = list(IA1 = list(lr), FA = list(fh01))
 #' fws3 = list(IA1 = list(fh01), FA = list(fh01))
@@ -126,7 +127,7 @@
 #' #Hazard and survival distributions
 #' 
 #' #Control Arm
-#' m0 = 10; lambda0 = log(2) / m0
+#' m0 = 12; lambda0 = log(2) / m0
 #' h0 = function(t){lambda0}; 
 #' S0 = function(t){exp(-lambda0 * t)}
 #' 
@@ -136,6 +137,7 @@
 #' 
 #' #Enrollment
 #' F.entry = function(t){(t/21)^1.5*as.numeric(t <= 21) + as.numeric(t > 21)}
+#' F.entry = function(t){(t/12)*as.numeric(t <= 12) + as.numeric(t > 12)}
 #' 
 #' #Drop-off
 #' eta0 = -log(1-0.03/12) #control arm monthly drop off rate 0.03/12.
@@ -168,12 +170,12 @@
 #' H0 = "Y", logrank="Y", fws.options=list(fws1))
 #' 
 #' #same as above; using F.entry function to replac A and w specifications.
-#' H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, r=1, 
+#' H0 = simulation.nphDesign.pwexp(nSim=10, N = 100, r=1, 
 #' Lambda=F.entry, 
 #' lam0=lambda0, lam1=lambda0*0.7,
 #' targetEvents = e, drop0 = 0.03/12, drop1=0.03/12,
 #' overall.alpha = 0.025, sf = "LDOF",
-#' H0 = "Y", logrank="Y", fws.options=list(fws1))
+#' H0 = "N", logrank="Y", fws.options=list(fws1))
 #' 
 #' @export 
 simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda=NULL, r=1, lam0=log(2)/12, lam1=log(2)/12*0.7, 
@@ -220,7 +222,7 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda
     clusterEvalQ(my.cluster, .libPaths(.libPaths())
     )
     registerDoParallel(cl = my.cluster)
-    clusterEvalQ(my.cluster, library(nphDesign))
+    clusterEvalQ(my.cluster, library(nphRshiny))
     sim.data=NULL
     
     for (i in 1:nSim) {
