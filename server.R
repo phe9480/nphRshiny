@@ -9,6 +9,7 @@ library(gsDesign)
 library(parallel)  
 library(foreach)  
 library(doParallel)
+library(nphsim)
 
 # Define server logic required to draw a histogram
 function(input, output, session) {
@@ -1680,6 +1681,7 @@ function(input, output, session) {
       shape0 = as.numeric(eval(str2lang(input$shape3_cS)))
     } else if(input$testFunC=="F"){
       dist0 = "exponential"
+      cuts0 = NULL
       if(input$conMethodS == 'Median'){
         lam0 = log(2)/as.numeric(eval(str2lang(input$medCS)))
       } else {
@@ -1716,6 +1718,7 @@ function(input, output, session) {
         shape1 = as.numeric(eval(str2lang(input$shape3_eS)))
       } else if(input$testFunE=="F"){
         dist1 = "exponential"
+        cuts1 = NULL
         if(input$expMethodS == 'Median'){
           lam1 = log(2)/as.numeric(eval(str2lang(input$medES)))
         } else {
@@ -1726,30 +1729,67 @@ function(input, output, session) {
       }}
       parall <- if_else(input$parS == 'T', TRUE, FALSE)
       
-      powerS <- simulation.nphDesign(
-        nSim = as.numeric(input$nSim),
-        r = as.numeric(input$ratioS),
-        n = as.numeric(input$nS),
-        targetEvents = eve,
-        overall.alpha = overall.alpha,
-        sf = sf,
-        param = param,
-        p1 = p1,
-        cum.alpha = cum, dist0 = dist0,
-        lam0 = lam0, shape0 = shape0, scale0 = scale0,
-        p10 = p10, S0 = S0, cuts0 = cuts0,
-        dist1 = dist1, HR = HR,
-        lam1 = lam1, shape1 = shape1, scale1 = scale1,
-        p11 = p11, S1 = S1, cuts1 = cuts1,
-        fws.options = wss_s(),
-        Lambda = F.entryS(),  
-        drop0 = as.numeric(input$conDPS)/12,
-        drop1 = as.numeric(input$expDPS)/12,
-        logrank = input$lr,
-        parallel = parall,
-        n.cores = as.numeric(input$coreS),
-        seed = as.numeric(input$seed)
-      )
+      pw_exp0 = (input$testFunC == 'F' | input$testFunC == 'B')
+      pw_exp1 = (input$testFunE == 'F' | input$testFunE == 'B' | input$distEXPS == 'A')
+      
+      if (pw_exp0 & pw_exp1){
+        if(input$distEXPS == 'A'){
+          lam1 = lam0 * HR
+          cuts1 = cuts0
+        }
+        powerS <- simulation.nphDesign.pwexp(
+          nSim = as.numeric(input$nSim),
+          r = as.numeric(input$ratioS),
+          N = as.numeric(input$nS),
+          A = as.numeric(input$durS),
+          w = as.numeric(input$wtS),
+          targetEvents = eve,
+          overall.alpha = overall.alpha,
+          sf = sf,
+          param = param,
+          p1 = p1,
+          cum.alpha = cum, 
+          lam0 = lam0, cuts0 = cuts0,
+          lam1 = lam1, cuts1 = cuts1,
+          fws.options = wss_s(),
+          Lambda = F.entryS(),  
+          drop0 = as.numeric(input$conDPS)/12,
+          drop1 = as.numeric(input$expDPS)/12,
+          logrank = input$lr,
+          parallel = parall,
+          n.cores = as.numeric(input$coreS),
+          seed = as.numeric(input$seed)
+        )
+          
+      } else {
+        powerS <- simulation.nphDesign(
+          nSim = as.numeric(input$nSim),
+          r = as.numeric(input$ratioS),
+          n = as.numeric(input$nS),
+          targetEvents = eve,
+          overall.alpha = overall.alpha,
+          sf = sf,
+          param = param,
+          p1 = p1,
+          cum.alpha = cum, dist0 = dist0,
+          lam0 = lam0, shape0 = shape0, scale0 = scale0,
+          p10 = p10, S0 = S0, cuts0 = cuts0,
+          dist1 = dist1, HR = HR,
+          lam1 = lam1, shape1 = shape1, scale1 = scale1,
+          p11 = p11, S1 = S1, cuts1 = cuts1,
+          fws.options = wss_s(),
+          Lambda = F.entryS(),  
+          drop0 = as.numeric(input$conDPS)/12,
+          drop1 = as.numeric(input$expDPS)/12,
+          logrank = input$lr,
+          parallel = parall,
+          n.cores = as.numeric(input$coreS),
+          seed = as.numeric(input$seed)
+        )
+      }
+      
+      
+      
       if (input$lr == 'N') {
         data.frame(
           Analysis = 1:as.numeric(input$lookS),
