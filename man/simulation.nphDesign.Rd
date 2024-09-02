@@ -213,7 +213,7 @@ fws = list(fws1, fws2, fws3, fws4, fws5, fws6)
 #Hazard and survival distributions
 
 #Control Arm
-m0 = 10; lambda0 = log(2) / m0
+m0 = 12; lambda0 = log(2) / m0
 h0 = function(t){lambda0}; 
 S0 = function(t){exp(-lambda0 * t)}
 
@@ -222,7 +222,7 @@ HR = 0.7; h1 = function(t){lambda0*HR};
 S1 = function(t){exp(-lambda0 *HR* t)}
 
 #Enrollment
-F.entry = function(t){(t/21)^1.5*as.numeric(t <= 21) + as.numeric(t > 21)}
+F.entry = function(t){(t/12)^1.2*as.numeric(t <= 12) + as.numeric(t > 12)}
 
 #Drop-off
 drop0 = drop1 = 0.03/12
@@ -273,6 +273,13 @@ parallel=FALSE, n.cores=8, seed=2022, out.z = TRUE)
 
 #same as above using "Proportional Hazards" option
 o=simulation.nphDesign(nSim=5, n = 100, r=1, Lambda=F.entry, drop0=0.03/12, drop1=0.03/12, 
+dist0 = "exponential", lam0=lambda0, shape0 = NULL, scale0 = NULL, p10 = NULL, S0 = NULL, cuts0 = NULL,
+dist1 = "Proportional Hazards", HR=0.7, lam1=NULL, shape1 = NULL, scale1 = NULL, p11 = NULL, S1 = NULL, cuts1 = NULL, 
+targetEvents = e, sf = "LDOF", param = NULL, overall.alpha = 0.025, p1=NULL, cum.alpha=NULL,
+logrank="Y", fws.options=list(fws1), 
+parallel=FALSE, n.cores=8, seed=2022, out.z = FALSE)
+
+o=simulation.nphDesign(nSim=100, n = 100, r=1, Lambda=F.entry, drop0=0.03/12, drop1=0.03/12, 
 dist0 = "exponential", lam0=lambda0, shape0 = NULL, scale0 = NULL, p10 = NULL, S0 = NULL, cuts0 = NULL,
 dist1 = "Proportional Hazards", HR=0.7, lam1=NULL, shape1 = NULL, scale1 = NULL, p11 = NULL, S1 = NULL, cuts1 = NULL, 
 targetEvents = e, sf = "LDOF", param = NULL, overall.alpha = 0.025, p1=NULL, cum.alpha=NULL,
