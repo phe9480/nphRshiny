@@ -18,11 +18,13 @@
 #' Lambda(t) = (t/A) where A is the enrollment period, i.e., Lambda(t) = t/A for 0<=t<=A, and 
 #' Lambda(t) = 1 when t > A. For more general non-uniform enrollment with weight psi, 
 #' Lambda(t) = (t/A)^psi*I(0<=t<=A) + I(t>A). Default Lambda is uniform distribution function.
-#' @param G0 Cumulative distribution function of drop-off for control arm, eg, G0=function(t){1-exp(-0.03/12*t)}
-#'               is the distribution function for 3 percent drop-off in 12 months of followup.
-#' @param G1 Cumulative distribution function of drop-off for experimental arm, eg, G1=function(t){1-exp(-0.03/12*t)}
-#'               is the distribution function for 3 percent drop-off in 12 months of followup.
-#'
+#' @param G0 Cumulative distribution function of drop-off for control arm. 
+#' For example, 3 percent drop-off in 12 months of followup means then the hazard rate for unit time 
+#' is eta0 = -log(1-0.03/12), so G0=function(t){1-exp(-eta0*t)}.
+#' @param G1 Cumulative distribution function of drop-off for experimental arm. 
+#' Similarly, G1=function(t){1-exp(-eta1*t)}, where eta1=-log(1-0.03/12) is the 
+#' hazard rate for 3 percent drop-off in 12 months of followup.  
+#' 
 #' @return Date of Cutoff (DCO)
 #'  
 #' @examples 
