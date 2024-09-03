@@ -1031,6 +1031,18 @@ function(input, output, session) {
     })
   })
   
+  observeEvent(input$fdco,{
+    req(input$targetEvents, input$n, input$ratio)
+    output$dco <- renderText({
+      paste("DCO:", fDCO(events = input$targetEvents, 
+                                   r = as.numeric(input$ratio), 
+                                   h0=h0(),S0=s0(),
+                                   h1=h1(),S1=s1(),
+                                   Lambda=F.entry(), 
+                                   n = as.numeric(input$n)))
+    })
+  })
+  
   observeEvent(input$eve,{
     req(input$n,input$tmax,input$ratio)
     output$eTable <- renderDataTable({

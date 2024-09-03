@@ -186,7 +186,13 @@ shinyUI(navbarPage(title = tags$div(tags$img(src="https://i.postimg.cc/QCn8wk28/
                                        fluidRow(
                                          column(4,
                                                 numericInput("tmax","Maximum time",value=50),
-                                                actionButton("eve","Calculate events"))
+                                                actionButton("eve","Calculate events")),
+                                         column(3,
+                                                numericInput("targetEvents","Target Number of Events",value=30),
+                                                actionButton("fdco","Find DCO")),
+                                         column(2,
+                                                textOutput("dco"))
+                                      
                                        ),
                                        fluidRow(
                                          column(6,
