@@ -1038,6 +1038,7 @@ function(input, output, session) {
                                    r = as.numeric(input$ratio), 
                                    h0=h0(),S0=s0(),
                                    h1=h1(),S1=s1(),
+                                   G0=G0(),G1=G1(),
                                    Lambda=F.entry(), 
                                    n = as.numeric(input$n)))
     })
