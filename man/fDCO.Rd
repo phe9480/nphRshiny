@@ -114,10 +114,16 @@ c = exp(-delay*lambda0*(1-HR));
 S1 = function(t){exp(-lambda0*t)*as.numeric(t<delay) + c*exp(-HR*lambda0*t)*as.numeric(t>=delay)}
 Lambda = function(t){(t/18)^1.5*as.numeric(t <= 18) + as.numeric(t > 18)}
 
+#dropout probability: 0.05 in 12 months for control arm. 0.03 for experimental arm
+eta0 = -log(1-0.05/12)
+eta1 = -log(1-0.03/12)
+G0=function(t){1-exp(-eta0*t)}
+G1=function(t){1-exp(-eta1*t)}
+
 max.DCO = 30
 nE = matrix(NA, nrow = max.DCO, ncol=3)
 for (DCO in 1:max.DCO) {
-  o = fe(DCO = DCO, r = 1, h0 = h0, S0 = S0, h1 = h1, S1 = S1, Lambda = Lambda, n = 450)
+  o = fe(DCO = DCO, r = 1, h0 = h0, S0 = S0, h1 = h1, S1 = S1, Lambda = Lambda, n = 450, G0=G0, G1=G1)
   nE[DCO, 1] = o$e0; nE[DCO, 2] = o$e1; nE[DCO, 3] = o$e
 }
 plot(1:max.DCO, nE[,3], type="n", xlab="Months", ylab = "Num of events")   
@@ -126,8 +132,8 @@ lines(1:max.DCO, nE[, 2], lty = 2, col=2)
 lines(1:max.DCO, nE[, 3], lty = 3, col=3)
 legend(0, max(nE), c("Control", "Experimental", "Total"), col=1:3, lty=1:3, bty="n", cex=0.8)
 
-e=fe(DCO = 30, r = 1, h0 = h0, S0 = S0, h1 = h1, S1 = S1, Lambda = Lambda, n = 450)
+e=fe(DCO = 30, r = 1, h0 = h0, S0 = S0, h1 = h1, S1 = S1, Lambda = Lambda, n = 450, G0=G0, G1=G1)
 e
-fDCO(events = e$e, r = 1, h0 = h0, S0 = S0, h1 = h1, S1 = S1, Lambda = Lambda, n = 450)
+fDCO(events = e$e, r = 1, h0 = h0, S0 = S0, h1 = h1, S1 = S1, Lambda = Lambda, n = 450, G0=G0, G1=G1)
 
 }
