@@ -294,7 +294,6 @@ H0 = "Y", logrank="Y", fws.options=list(fws1))
 
 
 #Utility functions
-lr = nphRshiny:::lr; fh01 = nphRshiny:::fh01; fh11 = nphRshiny:::fh11
 fws1 = list(IA1 = list(lr), FA = list(lr))
 fws2 = list(IA1 = list(lr), FA = list(fh01))
 fws3 = list(IA1 = list(fh01), FA = list(fh01))
@@ -310,7 +309,7 @@ fws = list(fws1, fws2, fws3, fws4, fws5, fws6)
 #Hazard and survival distributions
 
 #Control Arm
-m0 = 12; lambda0 = log(2) / m0
+m0 = 10; lambda0 = log(2) / m0
 h0 = function(t){lambda0}; 
 S0 = function(t){exp(-lambda0 * t)}
 
@@ -320,7 +319,6 @@ S1 = function(t){exp(-lambda0 *0.7* t)}
 
 #Enrollment
 F.entry = function(t){(t/21)^1.5*as.numeric(t <= 21) + as.numeric(t > 21)}
-F.entry = function(t){(t/12)*as.numeric(t <= 12) + as.numeric(t > 12)}
 
 #Drop-off
 eta0 = -log(1-0.03/12) #control arm monthly drop off rate 0.03/12.
@@ -346,19 +344,18 @@ Lambda = F.entry, n = 100, G0=G0, G1=G1)$e}
 
 #(c1) Type I error; also output logrank test simulation results
 H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, r = 1, 
-A = 12, w=1.5, Lambda=NULL,
+A = 21, w=1.5,
 lam0=lambda0, lam1=lambda0*0.7,
 targetEvents = e, drop0 = 0.03/12, drop1=0.03/12,
 overall.alpha = 0.025, sf = "LDOF",
 H0 = "Y", logrank="Y", fws.options=list(fws1))
 
-#Same as above with Lambda Option
-H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, r = 1, 
-A = 12, w=NULL, Lambda=F.entry,
+#same as above; using F.entry function to replac A and w specifications.
+H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, r=1, 
+Lambda=F.entry, 
 lam0=lambda0, lam1=lambda0*0.7,
 targetEvents = e, drop0 = 0.03/12, drop1=0.03/12,
 overall.alpha = 0.025, sf = "LDOF",
 H0 = "Y", logrank="Y", fws.options=list(fws1))
-
 
 }
