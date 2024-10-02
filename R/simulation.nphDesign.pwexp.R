@@ -111,7 +111,6 @@
 #' @examples
 #' 
 #' #Utility functions
-#' lr = nphRshiny:::lr; fh01 = nphRshiny:::fh01; fh11 = nphRshiny:::fh11
 #' fws1 = list(IA1 = list(lr), FA = list(lr))
 #' fws2 = list(IA1 = list(lr), FA = list(fh01))
 #' fws3 = list(IA1 = list(fh01), FA = list(fh01))
@@ -127,7 +126,7 @@
 #' #Hazard and survival distributions
 #' 
 #' #Control Arm
-#' m0 = 12; lambda0 = log(2) / m0
+#' m0 = 10; lambda0 = log(2) / m0
 #' h0 = function(t){lambda0}; 
 #' S0 = function(t){exp(-lambda0 * t)}
 #' 
@@ -137,7 +136,6 @@
 #' 
 #' #Enrollment
 #' F.entry = function(t){(t/21)^1.5*as.numeric(t <= 21) + as.numeric(t > 21)}
-#' F.entry = function(t){(t/12)*as.numeric(t <= 12) + as.numeric(t > 12)}
 #' 
 #' #Drop-off
 #' eta0 = -log(1-0.03/12) #control arm monthly drop off rate 0.03/12.
@@ -170,12 +168,12 @@
 #' H0 = "Y", logrank="Y", fws.options=list(fws1))
 #' 
 #' #same as above; using F.entry function to replac A and w specifications.
-#' H0 = simulation.nphDesign.pwexp(nSim=10, N = 100, r=1, 
+#' H0 = simulation.nphDesign.pwexp(nSim=5, N = 100, r=1, 
 #' Lambda=F.entry, 
 #' lam0=lambda0, lam1=lambda0*0.7,
 #' targetEvents = e, drop0 = 0.03/12, drop1=0.03/12,
 #' overall.alpha = 0.025, sf = "LDOF",
-#' H0 = "N", logrank="Y", fws.options=list(fws1))
+#' H0 = "Y", logrank="Y", fws.options=list(fws1))
 #' 
 #' @export 
 simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda=NULL, r=1, lam0=log(2)/12, lam1=log(2)/12*0.7, 
@@ -246,7 +244,41 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda
         wlri$result = as.numeric(wlri$inference=="Positive")
         wlr.sim[i, m, , ] = as.matrix(wlri[,c(2,3,5,6,8)])
       }
-    }    
+    }
+    for (i in 1:nSim) {
+      #(4). Standard log-rank test for all analyses if requested
+      if (logrank=="Y"){
+        if(K > 1){
+          #GSD boundary for each analysis
+          if(side == 1) {
+            z.bd <- gsDesign::gsDesign(k=K,  alpha=overall.alpha,timing=timing[1:(K-1)], 
+                                       sfu=gsDesign::sfLDOF)$upper$bound 
+          } else{
+            z.bd <- gsDesign::gsDesign(k=K,  alpha=overall.alpha/2,timing=timing[1:(K-1)], 
+                                       sfu=gsDesign::sfLDOF)$upper$bound 
+          }
+        } else {
+          if(side == 1) {z.bd = qnorm(1-overall.alpha)} else{z.bd = qnorm(1-overall.alpha/2)}
+        }
+        for (j in 1:K){
+          lr.test = survival::survdiff(survival::Surv(survTimeCut, 1-cnsrCut) ~ group, data = sim.data[[i]][[j]])
+          
+          #convert to z value in correct direction: z>0 means better experimental arm.
+          better = as.numeric(lr.test$obs[1] > lr.test$obs[2])
+          sign = 2*better - 1
+          z = sqrt(lr.test$chisq) * sign
+          
+          #count power
+          lr.sim[i, j, 1] = z
+          if (side == 1){ p = 1 - pnorm(z)} else {p = 2*(1 - pnorm(z))}
+          
+          lr.sim[i, j, 2] = p
+          lr.sim[i, j, 3] = j
+          lr.sim[i, j, 4] = z.bd[j]
+          lr.sim[i, j, 5] = as.numeric(z > z.bd[j])
+        }
+      }
+    }
   }else{
     for (i in 1:nSim) {
       #(1). Generate data
@@ -281,7 +313,7 @@ simulation.nphDesign.pwexp = function(nSim=10000, N = 100, A = 21, w=1.5, Lambda
           lr.test = survival::survdiff(survival::Surv(survTimeCut, 1-cnsrCut) ~ group, data = dati[[j]])
           
           #convert to z value in correct direction: z>0 means better experimental arm.
-          better = as.numeric(lr.test$obs[2] < lr.test$exp[2])
+          better = as.numeric(lr.test$obs[1] > lr.test$obs[2])
           sign = 2*better - 1
           z = sqrt(lr.test$chisq) * sign
           

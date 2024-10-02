@@ -199,30 +199,6 @@
 #' logrank="Y", fws.options=list(fws1), 
 #' parallel=FALSE, n.cores=8, seed=2022, out.z = FALSE)
 #' 
-#' #same as above using "Proportional Hazards" option
-#' o=simulation.nphDesign(nSim=10, n = 100, r=1, Lambda=F.entry, 
-#' drop0=0, drop1=0, 
-#' dist0 = "exponential", lam0=log(2)/12, shape0 = NULL, scale0 = NULL, 
-#' p10 = NULL, S0 = NULL, cuts0 = NULL,
-#' dist1 = "Proportional Hazards", HR=0.7, lam1=NULL, shape1 = NULL, 
-#' scale1 = NULL, p11 = NULL, S1 = NULL, cuts1 = NULL, 
-#' targetEvents = c(50, 60), sf = "LDOF", param = NULL, overall.alpha = 0.025, 
-#' p1=NULL, cum.alpha=NULL,
-#' logrank="Y", fws.options=list(fws1), 
-#' parallel=FALSE, n.cores=10, seed=2022, out.z = FALSE)
-#' 
-#' #same as above using "Proportional Hazards" option
-#' o=simulation.nphDesign(nSim=10, n = 100, r=1, A=21, w=1.5, Lambda=NULL, 
-#' drop0=0.03/12, drop1=0.03/12, 
-#' dist0 = "exponential", lam0=lambda0, shape0 = NULL, scale0 = NULL, 
-#' p10 = NULL, S0 = NULL, cuts0 = NULL,
-#' dist1 = "Proportional Hazards", HR=0.7, lam1=NULL, shape1 = NULL, 
-#' scale1 = NULL, p11 = NULL, S1 = NULL, cuts1 = NULL, 
-#' targetEvents = e, sf = "LDOF", param = NULL, overall.alpha = 0.025, 
-#' p1=NULL, cum.alpha=NULL,
-#' logrank="Y", fws.options=list(fws1), 
-#' parallel=TRUE, n.cores=10, seed=2022, out.z = FALSE)
-#' 
 #' @export 
 simulation.nphDesign = function(nSim=3, n = 100, r=1, A = 21, w=1.5, 
                                 Lambda=NULL, drop0=0, drop1=0, 
@@ -241,10 +217,8 @@ simulation.nphDesign = function(nSim=3, n = 100, r=1, A = 21, w=1.5,
     side = 1 #always one-sided
     
     #Entry data
-    nEachMonth = nphRshiny::f.nEachMonth(N=n, A=A, w=w, r=r, Lambda=Lambda)
+    nEachMonth = f.nEachMonth(N=n, A=A, w=w, r=r, Lambda=Lambda)
     n0 = sum(nEachMonth$n0); n1 = sum(nEachMonth$n1)
-    
-    A = length(nEachMonth$n0)
     
   ##############################
   #M Options of test strategies
@@ -488,12 +462,10 @@ simulation.nphDesign = function(nSim=3, n = 100, r=1, A = 21, w=1.5,
       #(4). EnterTime, CalendarTime
       ############################
       enterTime0 = rep(NA, n0)
-      
       enterTime0[1:nEachMonth$n0[1]] = runif(nEachMonth$n0[1], min=0, max=1)
       if (A > 1) {for (m in 2:A){
         LL = sum(nEachMonth$n0[1:(m-1)])+1
         UU = sum(nEachMonth$n0[1:m])
-        nEachMonth$n0[m]
         enterTime0[LL:UU] = runif(nEachMonth$n0[m], min=m-1, max=m)
       }}
       
